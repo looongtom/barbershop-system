@@ -20,12 +20,12 @@ func (u UserServiceStruct) ChangePassFirstTime(ctx context.Context, username, pa
 	return data, nil
 }
 
-func (u UserServiceStruct) Login(ctx context.Context, user entity.User) (string, error) {
-	jwt, err := u.repository.Login(ctx, user)
+func (u UserServiceStruct) Login(ctx context.Context, user entity.User) (*string, *string, error) {
+	accessToken, refreshToken, err := u.repository.Login(ctx, user)
 	if err != nil {
-		return "error while generating jwt", err
+		return nil, nil, err
 	}
-	return jwt, nil
+	return accessToken, refreshToken, nil
 }
 
 func (u UserServiceStruct) Register(ctx context.Context, user entity.User) (string, error) {
@@ -40,6 +40,13 @@ func (u UserServiceStruct) Register(ctx context.Context, user entity.User) (stri
 
 func (u UserServiceStruct) GetProfile(ctx context.Context, email string) (interface{}, error) {
 	data, err := u.repository.GetProfile(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+func (u UserServiceStruct) RefreshToken(ctx context.Context, username string) (interface{}, error) {
+	data, err := u.repository.RefreshToken(ctx, username)
 	if err != nil {
 		return nil, err
 	}

@@ -65,7 +65,11 @@ type (
 		Password string `json:"password"`
 	}
 	LoginResponse struct {
-		Token string `json:"token"`
+		RefreshToken string `json:"refreshToken"`
+		AccessToken  string `json:"accessToken"`
+	}
+	RefreshResponse struct {
+		AccessToken string `json:"accessToken"`
 	}
 	UserProfileResponse struct {
 		Data interface{} `json:"data"`
@@ -110,13 +114,33 @@ func MakeChangePassFirstTimeEndpoints(u user.UserService) endpoint.Endpoint {
 func MakeLoginEndpoints(u user.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(LoginRequest)
-		token, err := u.Login(ctx, entity.User{
+		accessToken, refreshToken, err := u.Login(ctx, entity.User{
 			Username: req.Username,
 			Password: req.Password,
 		})
-		return LoginResponse{Token: token}, err
+		resp := LoginResponse{
+			RefreshToken: *refreshToken,
+			AccessToken:  *accessToken,
+		}
+		return resp, err
 	}
 }
+
+func MakeRefreshEndpoints(u user.UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		username := request.(string)
+		accessToken, err := u.RefreshToken(ctx, username)
+		if err != nil {
+			return Response{
+				Message: err.Error(),
+				Status:  500,
+				Data:    nil,
+			}, err
+		}
+		return RefreshResponse{AccessToken: accessToken.(string)}, err
+	}
+}
+
 func MakeGetProfileEndpoints(u user.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		//get request param in a string
@@ -189,6 +213,32 @@ func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 	return emailRP, nil
 }
+func DecodeRefreshRequest(ctx context.Context, r *http.Request) (_ interface{}, err error) {
+	tokenString := r.Header.Get("Authorization")
+	if tokenString == "" {
+		return nil, errors.New("token is required")
+	}
+	userName, err := auth.GetSubjectFromToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+	tokenString = tokenString[len("Bearer "):]
+	err = auth.VerifyRefreshToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+	collectionPostgres, err := database.ConnectPostgres()
+	if err != nil {
+		return nil, err
+	}
+	var result entity.User
+	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	if err != nil {
+		return nil, err
+	}
+	return result.Username, nil
+}
+
 func DecodeChangePassFirstTimeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
@@ -219,7 +269,9 @@ func DecodeChangePassFirstTimeRequest(_ context.Context, r *http.Request) (inter
 	if govalidator.IsNull(request.Password) {
 		return nil, errors.New("password is required")
 	}
-	request.Username = userName
+	if userName != request.Username {
+		return nil, errors.New("username is invalid")
+	}
 	return request, nil
 }
 func DecodeLogoutRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -330,7 +382,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Token: "+accessToken)
 }
 func GenerateToken(username string) (string, error) {
-	token, err := auth.Create(username)
+	token, err := auth.CreateAccessToken(username)
 	if err != nil {
 		fmt.Println("errCreate")
 		fmt.Println(err)

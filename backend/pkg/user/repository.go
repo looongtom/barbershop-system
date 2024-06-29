@@ -6,9 +6,10 @@ import (
 )
 
 type UserRepository interface {
-	Login(ctx context.Context, user entity.User) (string, error)
+	Login(ctx context.Context, user entity.User) (*string, *string, error)
 	Register(ctx context.Context, user entity.User) error
 	GetProfile(ctx context.Context, email string) (interface{}, error)
 	Logout(ctx context.Context, token string) error
 	ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error)
+	RefreshToken(ctx context.Context, username string) (interface{}, error)
 }

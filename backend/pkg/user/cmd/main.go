@@ -59,11 +59,16 @@ func main() {
 		transport.MakeLogoutEndpoints(svc),
 		transport.DecodeLogoutRequest,
 		transport.EncodeResponse)
+	RefreshHandler := httptransport.NewServer(
+		transport.MakeRefreshEndpoints(svc),
+		transport.DecodeRefreshRequest,
+		transport.EncodeResponse)
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/user/register", RegisterUserHandler).Methods("POST")
-	r.Handle("/user/login", LoginHandler).Methods("POST")
+	r.Handle("/auth/register", RegisterUserHandler).Methods("POST")
+	r.Handle("/auth/login", LoginHandler).Methods("POST")
+	r.Handle("/auth/refresh", RefreshHandler).Methods("POST")
 	r.Handle("/auth/profile", GetProfileHandler).Methods("GET")
 	r.Handle("/auth/logout", LogoutHandler).Methods("POST")
 	r.Handle("/auth/change-pass-first-time", ChangePassFirstTimeHandler).Methods("POST")

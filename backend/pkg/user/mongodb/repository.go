@@ -42,31 +42,43 @@ func (r repo) ChangePassFirstTime(ctx context.Context, username, password string
 	return "success", nil
 }
 
-func (r repo) Login(ctx context.Context, user entity.User) (string, error) {
+func (r repo) Login(ctx context.Context, user entity.User) (*string, *string, error) {
 	username := entity.Santize(user.Username)
 	password := entity.Santize(user.Password)
 	var result entity.User
 	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
 	if err != nil {
-		return "error while selecting user info", errors.New("username not found")
+		return nil, nil, errors.New("username not found")
 	}
 
 	hashedPassword := fmt.Sprintf("%v", result.Password)
 	err = entity.CheckPasswordHash(hashedPassword, password)
 
 	if err != nil {
-		return "error generate jwt", errors.New("username or password incorrect")
+		return nil, nil, errors.New("username or password incorrect")
 	}
-	token, errCreate := auth.Create(user.Username)
+	token, errCreate := auth.CreateAccessToken(user.Username)
 	if errCreate != nil {
-		return "error generate jwt", errCreate
+		return nil, nil, errCreate
 	}
+
 	newToken := bson.M{"token": token, "user": user.Username, "created_at": time.Now()}
 	_, errs := r.collection.InsertOne(context.TODO(), newToken)
 	if errs != nil {
-		return "error generate jwt", errs
+		return nil, nil, errs
 	}
-	return token, nil
+
+	refreshToken, errCreate := auth.CreateRefreshToken(user.Username)
+	if errCreate != nil {
+		return nil, nil, errCreate
+	}
+	newRefreshToken := bson.M{"refresh_token": refreshToken, "user": user.Username, "created_at": time.Now()}
+	_, errs = r.collection.InsertOne(context.TODO(), newRefreshToken)
+	if errs != nil {
+		return nil, nil, errs
+	}
+
+	return &token, &refreshToken, nil
 }
 
 func (r repo) Register(ctx context.Context, user entity.User) error {
@@ -107,6 +119,23 @@ func (r repo) Register(ctx context.Context, user entity.User) error {
 	return nil
 }
 
+func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, error) {
+	var result entity.User
+	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	if err != nil {
+		return nil, errors.New("username not found")
+	}
+	refreshToken, errCreate := auth.CreateRefreshToken(username)
+	if errCreate != nil {
+		return nil, errCreate
+	}
+	newRefreshToken := bson.M{"refresh_token": refreshToken, "user": username, "created_at": time.Now()}
+	_, errs := r.collection.InsertOne(context.TODO(), newRefreshToken)
+	if errs != nil {
+		return nil, errs
+	}
+	return refreshToken, nil
+}
 func (r repo) GetProfile(ctx context.Context, email string) (interface{}, error) {
 	var result entity.User
 	err := r.db.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE email=$1", email).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
