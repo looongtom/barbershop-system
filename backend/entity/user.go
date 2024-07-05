@@ -6,12 +6,16 @@ import (
 	"strings"
 )
 
-type User struct {
-	ID       int    `json:"id,omitempty"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password,omitempty"`
-	Roles    string `json:"roles,omitempty"`
+type Account struct {
+	ID          int    `json:"id,omitempty"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
+	Password    string `json:"password,omitempty"`
+	Roles       string `json:"roles,omitempty"`
+	PhoneNumber string `json:"phoneNumber"`
+	FullName    string `json:"fullName"`
+	CreatedAt   int64  `json:"created_at,omitempty"`
+	UpdatedAt   int64  `json:"updated_at,omitempty"`
 }
 
 func Hash(password string) (string, error) {

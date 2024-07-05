@@ -2,13 +2,13 @@ package service
 
 import (
 	"DoAn/entity"
-	"DoAn/pkg/user"
+	"DoAn/pkg/account"
 	"context"
 	"github.com/go-kit/kit/log"
 )
 
 type UserServiceStruct struct {
-	repository user.UserRepository
+	repository account.UserRepository
 	logger     log.Logger
 }
 
@@ -20,7 +20,7 @@ func (u UserServiceStruct) ChangePassFirstTime(ctx context.Context, username, pa
 	return data, nil
 }
 
-func (u UserServiceStruct) Login(ctx context.Context, user entity.User) (*string, *string, error) {
+func (u UserServiceStruct) Login(ctx context.Context, user entity.Account) (*string, *string, error) {
 	accessToken, refreshToken, err := u.repository.Login(ctx, user)
 	if err != nil {
 		return nil, nil, err
@@ -28,7 +28,7 @@ func (u UserServiceStruct) Login(ctx context.Context, user entity.User) (*string
 	return accessToken, refreshToken, nil
 }
 
-func (u UserServiceStruct) Register(ctx context.Context, user entity.User) (string, error) {
+func (u UserServiceStruct) Register(ctx context.Context, user entity.Account) (string, error) {
 	var msg = "success"
 	if err := u.repository.Register(ctx, user); err != nil {
 		errMsg := err.Error()
@@ -62,7 +62,7 @@ func (u UserServiceStruct) Logout(ctx context.Context, token string) (string, er
 	return msg, nil
 }
 
-func NewService(rep user.UserRepository, logger log.Logger) user.UserService {
+func NewService(rep account.UserRepository, logger log.Logger) account.UserService {
 	return &UserServiceStruct{
 		repository: rep,
 		logger:     logger,

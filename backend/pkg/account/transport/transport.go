@@ -3,8 +3,8 @@ package transport
 import (
 	"DoAn/database"
 	"DoAn/entity"
-	"DoAn/pkg/user"
-	"DoAn/pkg/user/auth"
+	"DoAn/pkg/account"
+	"DoAn/pkg/account/auth"
 	"context"
 	"encoding/json"
 	"errors"
@@ -49,7 +49,7 @@ func init() {
 
 type (
 	RegisterUserRequest struct {
-		user entity.User
+		user entity.Account
 	}
 	ChangePassFirstTimeRequest struct {
 		Username string `json:"username,omitempty"`
@@ -83,7 +83,7 @@ type (
 	}
 )
 
-func MakeRegisterUserEndpoints(u user.UserService) endpoint.Endpoint {
+func MakeRegisterUserEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(RegisterUserRequest)
 		msg, err := u.Register(ctx, req.user)
@@ -93,7 +93,7 @@ func MakeRegisterUserEndpoints(u user.UserService) endpoint.Endpoint {
 		}, err
 	}
 }
-func MakeChangePassFirstTimeEndpoints(u user.UserService) endpoint.Endpoint {
+func MakeChangePassFirstTimeEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(ChangePassFirstTimeRequest)
 		msg, err := u.ChangePassFirstTime(ctx, req.Username, req.Password)
@@ -111,10 +111,10 @@ func MakeChangePassFirstTimeEndpoints(u user.UserService) endpoint.Endpoint {
 		}, err
 	}
 }
-func MakeLoginEndpoints(u user.UserService) endpoint.Endpoint {
+func MakeLoginEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(LoginRequest)
-		accessToken, refreshToken, err := u.Login(ctx, entity.User{
+		accessToken, refreshToken, err := u.Login(ctx, entity.Account{
 			Username: req.Username,
 			Password: req.Password,
 		})
@@ -126,7 +126,7 @@ func MakeLoginEndpoints(u user.UserService) endpoint.Endpoint {
 	}
 }
 
-func MakeRefreshEndpoints(u user.UserService) endpoint.Endpoint {
+func MakeRefreshEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		username := request.(string)
 		accessToken, err := u.RefreshToken(ctx, username)
@@ -141,7 +141,7 @@ func MakeRefreshEndpoints(u user.UserService) endpoint.Endpoint {
 	}
 }
 
-func MakeGetProfileEndpoints(u user.UserService) endpoint.Endpoint {
+func MakeGetProfileEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		//get request param in a string
 		email := request.(string)
@@ -152,7 +152,7 @@ func MakeGetProfileEndpoints(u user.UserService) endpoint.Endpoint {
 		}, err
 	}
 }
-func MakeLogoutEndpoints(u user.UserService) endpoint.Endpoint {
+func MakeLogoutEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		//get request param in a string
 		token := request.(string)
@@ -202,8 +202,8 @@ func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err != nil {
 		return nil, err
 	}
-	var result entity.User
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	var result entity.Account
+	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -231,8 +231,8 @@ func DecodeRefreshRequest(ctx context.Context, r *http.Request) (_ interface{}, 
 	if err != nil {
 		return nil, err
 	}
-	var result entity.User
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	var result entity.Account
+	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -257,8 +257,8 @@ func DecodeChangePassFirstTimeRequest(_ context.Context, r *http.Request) (inter
 	if err != nil {
 		return nil, err
 	}
-	var result entity.User
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	var result entity.Account
+	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -292,8 +292,8 @@ func DecodeLogoutRequest(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return nil, err
 	}
-	var result entity.User
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	var result entity.Account
+	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -350,27 +350,35 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	var user entity.User
-	errFindEmail := collectionPostgres.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE email=$1", email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Roles)
+	var user entity.Account
+	errFindEmail := collectionPostgres.QueryRow("SELECT id,username,email,password,roles FROM account WHERE email=$1", email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Roles)
 
 	if errFindEmail != nil {
-		fmt.Println("User does not exist, create new user")
+		fmt.Println("Account does not exist, create new account")
 		password := ""
-		newUser := entity.User{Username: *username, Email: *email, Password: password, Roles: "ROLE_USER"}
-		_, errs := collectionPostgres.Exec("INSERT INTO userinfo (username, email, password,roles) VALUES ($1, $2, $3,$4)", newUser.Username, newUser.Email, newUser.Password, newUser.Roles)
+		newUser := entity.Account{
+			Username:  *username,
+			Email:     *email,
+			Password:  password,
+			Roles:     "ROLE_USER",
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		}
+		_, errs := collectionPostgres.Exec("INSERT INTO account (username, email, password,roles,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
+			newUser.Username, newUser.Email, newUser.Password, newUser.Roles, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
 		if errs != nil {
 			return
 		}
 	}
 
-	fmt.Println("User already exists, create jwt token")
+	fmt.Println("Account already exists, create jwt token")
 	accessToken, err := GenerateToken(*username)
 	if err != nil {
 		return
 	}
 	// Connect to MongoDB
 	collectionMongo := database.ConnectMongo(os.Getenv("TokenCollectionMongo"))
-	newToken := bson.M{"token": token, "user": username, "created_at": time.Now()}
+	newToken := bson.M{"token": token, "account": username, "created_at": time.Now()}
 	_, errs := collectionMongo.InsertOne(context.TODO(), newToken)
 	if errs != nil {
 		return
@@ -409,7 +417,7 @@ func getUserInfo(state string, code string) (*string, *string, *string, error) {
 	var result map[string]interface{}
 	err = json.Unmarshal(contents, &result)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to parse user info: %s", err.Error())
+		return nil, nil, nil, fmt.Errorf("failed to parse account info: %s", err.Error())
 	}
 	email, ok := result["email"].(string)
 	if !ok {

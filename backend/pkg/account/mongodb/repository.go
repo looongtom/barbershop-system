@@ -3,8 +3,8 @@ package mongodb
 import (
 	"DoAn/database"
 	"DoAn/entity"
-	"DoAn/pkg/user"
-	"DoAn/pkg/user/auth"
+	"DoAn/pkg/account"
+	"DoAn/pkg/account/auth"
 	"context"
 	"database/sql"
 	"errors"
@@ -23,10 +23,10 @@ type repo struct {
 }
 
 func (r repo) ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error) {
-	var result entity.User
-	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE username=$1 and password ='' ", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	var result entity.Account
+	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1 and password ='' ", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
 	if err != nil {
-		r.logger.Log(fmt.Sprintf("error while selecting user info: %v", err))
+		r.logger.Log(fmt.Sprintf("error while selecting account info: %v", err))
 		return nil, err
 	}
 	password, err = entity.Hash(password)
@@ -34,7 +34,7 @@ func (r repo) ChangePassFirstTime(ctx context.Context, username, password string
 		r.logger.Log(fmt.Sprintf("error while hashing password: %v", err))
 		return nil, err
 	}
-	_, err = r.db.Exec("UPDATE userinfo SET password=$1 WHERE username=$2", password, username)
+	_, err = r.db.Exec("UPDATE account SET password=$1 WHERE username=$2", password, username)
 	if err != nil {
 		r.logger.Log(fmt.Sprintf("error while updating data: %v", err))
 		return nil, err
@@ -42,11 +42,11 @@ func (r repo) ChangePassFirstTime(ctx context.Context, username, password string
 	return "success", nil
 }
 
-func (r repo) Login(ctx context.Context, user entity.User) (*string, *string, error) {
+func (r repo) Login(ctx context.Context, user entity.Account) (*string, *string, error) {
 	username := entity.Santize(user.Username)
 	password := entity.Santize(user.Password)
-	var result entity.User
-	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	var result entity.Account
+	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
 	if err != nil {
 		return nil, nil, errors.New("username not found")
 	}
@@ -62,7 +62,7 @@ func (r repo) Login(ctx context.Context, user entity.User) (*string, *string, er
 		return nil, nil, errCreate
 	}
 
-	newToken := bson.M{"token": token, "user": user.Username, "created_at": time.Now()}
+	newToken := bson.M{"token": token, "account": user.Username, "created_at": time.Now()}
 	_, errs := r.collection.InsertOne(context.TODO(), newToken)
 	if errs != nil {
 		return nil, nil, errs
@@ -72,7 +72,7 @@ func (r repo) Login(ctx context.Context, user entity.User) (*string, *string, er
 	if errCreate != nil {
 		return nil, nil, errCreate
 	}
-	newRefreshToken := bson.M{"refresh_token": refreshToken, "user": user.Username, "created_at": time.Now()}
+	newRefreshToken := bson.M{"refresh_token": refreshToken, "account": user.Username, "created_at": time.Now()}
 	_, errs = r.collection.InsertOne(context.TODO(), newRefreshToken)
 	if errs != nil {
 		return nil, nil, errs
@@ -81,14 +81,18 @@ func (r repo) Login(ctx context.Context, user entity.User) (*string, *string, er
 	return &token, &refreshToken, nil
 }
 
-func (r repo) Register(ctx context.Context, user entity.User) error {
+func (r repo) Register(ctx context.Context, user entity.Account) error {
 	createTable := `
-		CREATE TABLE IF NOT EXISTS userinfo (
+		CREATE TABLE IF NOT EXISTS account (
 			id SERIAL PRIMARY KEY,
             username VARCHAR(255) NOT NULL ,
             email VARCHAR(255) NOT NULL,
             password VARCHAR(255) NOT NULL,
-		    roles VARCHAR(255) NOT NULL 
+		    roles VARCHAR(255) NOT NULL ,
+		    phone_number VARCHAR(255) NOT NULL,
+			full_name VARCHAR(255) NOT NULL,
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL
 		);
 	`
 	_, err := r.db.Exec(createTable)
@@ -96,9 +100,9 @@ func (r repo) Register(ctx context.Context, user entity.User) error {
 		r.logger.Log(fmt.Sprintf("error while creating table: %v", err))
 		return err
 	}
-	var result entity.User
-	errFindUsername := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE username=$1", user.Username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
-	errFindEmail := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE email=$1", user.Email).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	var result entity.Account
+	errFindUsername := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1", user.Username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	errFindEmail := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE email=$1", user.Email).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
 
 	if errFindUsername == nil || errFindEmail == nil {
 		return errors.New("username or email is already exist")
@@ -109,8 +113,18 @@ func (r repo) Register(ctx context.Context, user entity.User) error {
 		return err
 	}
 
-	newUser := entity.User{Username: user.Username, Email: user.Email, Password: password, Roles: user.Roles}
-	_, err = r.db.Exec("INSERT INTO userinfo (username, email, password,roles) VALUES ($1, $2, $3,$4)", newUser.Username, newUser.Email, newUser.Password, newUser.Roles)
+	newUser := entity.Account{
+		Username:    user.Username,
+		Email:       user.Email,
+		Password:    password,
+		Roles:       user.Roles,
+		PhoneNumber: user.PhoneNumber,
+		FullName:    user.FullName,
+		CreatedAt:   time.Now().Unix(),
+		UpdatedAt:   time.Now().Unix(),
+	}
+	_, err = r.db.Exec("INSERT INTO account (username, email, password,roles,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
+		newUser.Username, newUser.Email, newUser.Password, newUser.Roles, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
 	if err != nil {
 		r.logger.Log(fmt.Sprintf("error while inserting data: %v", err))
 		return err
@@ -120,8 +134,8 @@ func (r repo) Register(ctx context.Context, user entity.User) error {
 }
 
 func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, error) {
-	var result entity.User
-	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM userinfo WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	var result entity.Account
+	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
 	if err != nil {
 		return nil, errors.New("username not found")
 	}
@@ -129,7 +143,7 @@ func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, e
 	if errCreate != nil {
 		return nil, errCreate
 	}
-	newRefreshToken := bson.M{"refresh_token": refreshToken, "user": username, "created_at": time.Now()}
+	newRefreshToken := bson.M{"refresh_token": refreshToken, "account": username, "created_at": time.Now()}
 	_, errs := r.collection.InsertOne(context.TODO(), newRefreshToken)
 	if errs != nil {
 		return nil, errs
@@ -137,8 +151,9 @@ func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, e
 	return refreshToken, nil
 }
 func (r repo) GetProfile(ctx context.Context, email string) (interface{}, error) {
-	var result entity.User
-	err := r.db.QueryRow("SELECT id,username,email,roles FROM userinfo WHERE email=$1", email).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	var result entity.Account
+	err := r.db.QueryRow("SELECT id,username,email,roles,phone_number,full_name,created_at,updated_at FROM account WHERE email=$1", email).
+		Scan(&result.ID, &result.Username, &result.Email, &result.Roles, &result.PhoneNumber, &result.FullName, &result.CreatedAt, &result.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +172,7 @@ func (r repo) Logout(ctx context.Context, tokenString string) error {
 	return nil
 }
 
-func NewRepository(collection *mongo.Collection, collectionPostgres *sql.DB, logger log.Logger) (user.UserRepository, error) {
+func NewRepository(collection *mongo.Collection, collectionPostgres *sql.DB, logger log.Logger) (account.UserRepository, error) {
 	return &repo{
 		collection: collection,
 		db:         collectionPostgres,

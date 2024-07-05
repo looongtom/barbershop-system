@@ -2,10 +2,10 @@ package main
 
 import (
 	"DoAn/database"
-	"DoAn/pkg/user"
-	repository "DoAn/pkg/user/mongodb"
-	"DoAn/pkg/user/service"
-	"DoAn/pkg/user/transport"
+	"DoAn/pkg/account"
+	repository "DoAn/pkg/account/mongodb"
+	"DoAn/pkg/account/service"
+	"DoAn/pkg/account/transport"
 	"github.com/joho/godotenv"
 	logV "log"
 	"net/http"
@@ -29,7 +29,7 @@ func main() {
 	}
 	r := mux.NewRouter()
 
-	var svc user.UserService
+	var svc account.UserService
 	svc = service.UserServiceStruct{}
 	{
 		repo, err := repository.NewRepository(collectionMongo, collectionPostgres, logger)
