@@ -203,7 +203,7 @@ func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, err
 	}
 	var result entity.Account
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func DecodeRefreshRequest(ctx context.Context, r *http.Request) (_ interface{}, 
 		return nil, err
 	}
 	var result entity.Account
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func DecodeChangePassFirstTimeRequest(_ context.Context, r *http.Request) (inter
 		return nil, err
 	}
 	var result entity.Account
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +293,7 @@ func DecodeLogoutRequest(_ context.Context, r *http.Request) (interface{}, error
 		return nil, err
 	}
 	var result entity.Account
-	err = collectionPostgres.QueryRow("SELECT id,username,email,roles FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Roles)
+	err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var user entity.Account
-	errFindEmail := collectionPostgres.QueryRow("SELECT id,username,email,password,roles FROM account WHERE email=$1", email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Roles)
+	errFindEmail := collectionPostgres.QueryRow("SELECT id,username,email,password,role FROM account WHERE email=$1", email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Role)
 
 	if errFindEmail != nil {
 		fmt.Println("Account does not exist, create new account")
@@ -360,12 +360,12 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 			Username:  *username,
 			Email:     *email,
 			Password:  password,
-			Roles:     "ROLE_USER",
+			Role:      entity.RoleUser,
 			CreatedAt: time.Now().Unix(),
 			UpdatedAt: time.Now().Unix(),
 		}
-		_, errs := collectionPostgres.Exec("INSERT INTO account (username, email, password,roles,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
-			newUser.Username, newUser.Email, newUser.Password, newUser.Roles, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
+		_, errs := collectionPostgres.Exec("INSERT INTO account (username, email, password,role,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
+			newUser.Username, newUser.Email, newUser.Password, newUser.Role, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
 		if errs != nil {
 			return
 		}

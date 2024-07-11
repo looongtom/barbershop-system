@@ -24,7 +24,7 @@ type repo struct {
 
 func (r repo) ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error) {
 	var result entity.Account
-	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1 and password ='' ", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	err := r.db.QueryRow("SELECT id,username,email,password,Role FROM account WHERE username=$1 and password ='' ", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 	if err != nil {
 		r.logger.Log(fmt.Sprintf("error while selecting account info: %v", err))
 		return nil, err
@@ -46,7 +46,7 @@ func (r repo) Login(ctx context.Context, user entity.Account) (*string, *string,
 	username := entity.Santize(user.Username)
 	password := entity.Santize(user.Password)
 	var result entity.Account
-	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	err := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 	if err != nil {
 		return nil, nil, errors.New("username not found")
 	}
@@ -88,9 +88,11 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
             username VARCHAR(255) NOT NULL ,
             email VARCHAR(255) NOT NULL,
             password VARCHAR(255) NOT NULL,
-		    roles VARCHAR(255) NOT NULL ,
+		    role int NOT NULL ,
 		    phone_number VARCHAR(255) NOT NULL,
 			full_name VARCHAR(255) NOT NULL,
+			about VARCHAR(255) NOT NULL,
+			avatar VARCHAR(255) NOT NULL,
 			created_at BIGINT NOT NULL,
 			updated_at BIGINT NOT NULL
 		);
@@ -101,8 +103,8 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
 		return err
 	}
 	var result entity.Account
-	errFindUsername := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1", user.Username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
-	errFindEmail := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE email=$1", user.Email).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	errFindUsername := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", user.Username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
+	errFindEmail := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE email=$1", user.Email).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 
 	if errFindUsername == nil || errFindEmail == nil {
 		return errors.New("username or email is already exist")
@@ -117,14 +119,16 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
 		Username:    user.Username,
 		Email:       user.Email,
 		Password:    password,
-		Roles:       user.Roles,
+		Role:        user.Role,
 		PhoneNumber: user.PhoneNumber,
 		FullName:    user.FullName,
+		About:       user.About,
+		Avatar:      user.Avatar,
 		CreatedAt:   time.Now().Unix(),
 		UpdatedAt:   time.Now().Unix(),
 	}
-	_, err = r.db.Exec("INSERT INTO account (username, email, password,roles,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
-		newUser.Username, newUser.Email, newUser.Password, newUser.Roles, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
+	_, err = r.db.Exec("INSERT INTO account (username, email, password,role,phone_number,full_name,about,avatar,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10)",
+		newUser.Username, newUser.Email, newUser.Password, newUser.Role, newUser.PhoneNumber, newUser.FullName, newUser.About, newUser.Avatar, newUser.CreatedAt, newUser.UpdatedAt)
 	if err != nil {
 		r.logger.Log(fmt.Sprintf("error while inserting data: %v", err))
 		return err
@@ -135,7 +139,7 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
 
 func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, error) {
 	var result entity.Account
-	err := r.db.QueryRow("SELECT id,username,email,password,roles FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Roles)
+	err := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 	if err != nil {
 		return nil, errors.New("username not found")
 	}
@@ -152,8 +156,8 @@ func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, e
 }
 func (r repo) GetProfile(ctx context.Context, email string) (interface{}, error) {
 	var result entity.Account
-	err := r.db.QueryRow("SELECT id,username,email,roles,phone_number,full_name,created_at,updated_at FROM account WHERE email=$1", email).
-		Scan(&result.ID, &result.Username, &result.Email, &result.Roles, &result.PhoneNumber, &result.FullName, &result.CreatedAt, &result.UpdatedAt)
+	err := r.db.QueryRow("SELECT id,username,email,role,phone_number,full_name,about,avatar,created_at,updated_at FROM account WHERE email=$1", email).
+		Scan(&result.ID, &result.Username, &result.Email, &result.Role, &result.PhoneNumber, &result.FullName, &result.About, &result.Avatar, &result.CreatedAt, &result.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}

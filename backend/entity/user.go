@@ -6,16 +6,29 @@ import (
 	"strings"
 )
 
+const (
+	RoleAdmin  = 0
+	RoleUser   = 1
+	RoleBarber = 2
+)
+
 type Account struct {
 	ID          int    `json:"id,omitempty"`
 	Username    string `json:"username"`
 	Email       string `json:"email"`
 	Password    string `json:"password,omitempty"`
-	Roles       string `json:"roles,omitempty"`
+	Role        int    `json:"role,omitempty"`
 	PhoneNumber string `json:"phoneNumber"`
 	FullName    string `json:"fullName"`
+	About       string `json:"about"`
+	Avatar      string `json:"avatar"`
 	CreatedAt   int64  `json:"created_at,omitempty"`
 	UpdatedAt   int64  `json:"updated_at,omitempty"`
+}
+
+type Role struct {
+	ID   int    `json:"id,omitempty"`
+	Name string `json:"name"`
 }
 
 func Hash(password string) (string, error) {
