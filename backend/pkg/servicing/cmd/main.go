@@ -59,7 +59,7 @@ func main() {
 	)
 
 	GetServiceHandler := httptransport.NewServer(
-		transport.MakeGetCategoryEndpoints(svc),
+		transport.MakeGetServiceEndpoints(svc),
 		transport.DecodeGetServiceRequest,
 		transport.EncodeResponse,
 	)

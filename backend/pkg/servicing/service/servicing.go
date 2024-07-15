@@ -33,6 +33,14 @@ func (s ServicingStruct) GetListServicing(ctx context.Context) (interface{}, err
 }
 
 func (s ServicingStruct) CreateServicing(ctx context.Context, service entity.Servicing) (interface{}, error) {
+	cate, err := s.repository.GetCategory(ctx, strconv.Itoa(service.CategoryID))
+	if err != nil {
+		return nil, err
+	}
+	if cate == nil {
+		return nil, errors.New("Category not found")
+	}
+
 	if err := s.repository.CreateService(ctx, service); err != nil {
 		errMsg := err.Error()
 		return errMsg, err
@@ -48,6 +56,13 @@ func (s ServicingStruct) UpdateServicing(ctx context.Context, service entity.Ser
 	_, err := s.repository.GetService(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	cate, err := s.repository.GetCategory(ctx, strconv.Itoa(service.CategoryID))
+	if err != nil {
+		return nil, err
+	}
+	if cate == nil {
+		return nil, errors.New("Category not found")
 	}
 	resp, err := s.repository.UpdateService(ctx, service)
 	if err != nil {
