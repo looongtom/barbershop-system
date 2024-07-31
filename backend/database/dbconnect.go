@@ -102,11 +102,13 @@ func ConnectPostgresBooking() (*sql.DB, error) {
 		os.Getenv("DB_NAME_BOOKING"))
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
+		fmt.Println("Error connect postgres:", err)
 		panic(err)
 	}
 
 	err = db.Ping()
 	if err != nil {
+		fmt.Println("Error connect postgres:", err)
 		panic(err)
 	}
 

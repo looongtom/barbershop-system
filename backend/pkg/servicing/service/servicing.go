@@ -14,6 +14,13 @@ type ServicingStruct struct {
 	logger     log.Logger
 }
 
+func NewService(repo servicing.ServicingRepository, logger log.Logger) servicing.ServicingService {
+	return &ServicingStruct{
+		repository: repo,
+		logger:     logger,
+	}
+}
+
 func (s ServicingStruct) GetServicing(ctx context.Context, id string) (interface{}, error) {
 	resp, err := s.repository.GetService(ctx, id)
 	if err != nil {
@@ -128,11 +135,4 @@ func (s ServicingStruct) UpdateCategory(ctx context.Context, category entity.Cat
 func (s ServicingStruct) DeleteCategory(ctx context.Context, id string) (interface{}, error) {
 	//TODO implement me
 	panic("implement me")
-}
-
-func NewService(repo servicing.ServicingRepository, logger log.Logger) servicing.ServicingService {
-	return &ServicingStruct{
-		repository: repo,
-		logger:     logger,
-	}
 }

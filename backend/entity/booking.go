@@ -1,14 +1,14 @@
 package entity
 
 type Booking struct {
-	ID         string  `json:"id"`
-	CustomerID string  `json:"customer_id"`
-	BarberId   string  `json:"barber_id"`
-	ResultId   string  `json:"result_id"`
+	ID         int     `json:"id"`
+	CustomerID int     `json:"customer_id"`
+	BarberId   int     `json:"barber_id"`
+	ResultId   int     `json:"result_id"`
 	Status     string  `json:"status"`
 	Price      float32 `json:"price"`
-	SlotId     string  `json:"slot_id"`
-	FeedBackId string  `json:"feedback_id"`
+	SlotId     int     `json:"slot_id"`
+	FeedBackId int     `json:"feedback_id"`
 	CreatedAt  int64   `json:"created_at"`
 	UpdatedAt  int64   `json:"updated_at"`
 }

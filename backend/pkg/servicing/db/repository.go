@@ -14,6 +14,13 @@ type repo struct {
 	logger log.Logger
 }
 
+func NewRepository(db *sql.DB, logger log.Logger) (servicing.ServicingRepository, error) {
+	return &repo{
+		db:     db,
+		logger: logger,
+	}, nil
+}
+
 func (r repo) GetService(ctx context.Context, id string) (*entity.Servicing, error) {
 	var service entity.Servicing
 	err := r.db.QueryRow("SELECT * FROM servicing WHERE id = $1", id).Scan(&service.ID, &service.Name, &service.Price, &service.Description, &service.Url, &service.CategoryID, &service.CreatedAt, &service.UpdatedAt)
@@ -134,11 +141,4 @@ func (r repo) CreateCategory(ctx context.Context, category string) (*entity.Cate
 		return nil, err
 	}
 	return &newCategory, nil
-}
-
-func NewRepository(db *sql.DB, logger log.Logger) (servicing.ServicingRepository, error) {
-	return &repo{
-		db:     db,
-		logger: logger,
-	}, nil
 }
