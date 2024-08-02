@@ -22,6 +22,25 @@ func NewRepository(db *sql.DB, logger log.Logger) (booking.BookingRepository, er
 	}, nil
 }
 
+func (r repo) GetBookingDetail(ctx context.Context, bookingId int) ([]entity.BookingDetail, error) {
+	var listBookingDetail []entity.BookingDetail
+	rows, err := r.db.Query("SELECT * FROM booking_detail WHERE booking_id = $1", bookingId)
+	if err != nil {
+		r.logger.Log("error while querying")
+		return nil, err
+	}
+	for rows.Next() {
+		var bookingDetail entity.BookingDetail
+		err = rows.Scan(&bookingDetail.BookingId, &bookingDetail.ServiceId)
+		if err != nil {
+			r.logger.Log("error while scanning")
+			return nil, err
+		}
+		listBookingDetail = append(listBookingDetail, bookingDetail)
+	}
+	return listBookingDetail, nil
+
+}
 func (r repo) CreateBookingDetail(ctx context.Context, listService []int, bookingId int) error {
 	query := `
 	INSERT INTO booking_detail(booking_id, service_id) VALUES($1, $2)

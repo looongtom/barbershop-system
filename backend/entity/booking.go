@@ -14,7 +14,6 @@ type Booking struct {
 }
 
 type BookingDetail struct {
-	ID        string `json:"id"`
 	BookingId string `json:"booking_id"`
 	ServiceId string `json:"service_id"`
 }

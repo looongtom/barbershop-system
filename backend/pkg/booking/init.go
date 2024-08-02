@@ -8,11 +8,6 @@ import (
 func CreateTable(db sql.DB) (err error) {
 
 	tableQueries := []string{
-		`CREATE TABLE IF NOT EXISTS booking_detail (
-			booking_id INT NOT NULL,
-			service_id INT NOT NULL,
-			FOREIGN KEY (booking_id) REFERENCES Booking(ID) ON DELETE CASCADE
-		);`,
 		`CREATE TABLE IF NOT EXISTS booking(
     		id SERIAL PRIMARY KEY,
     		customer_id int NOT NULL,
@@ -25,6 +20,11 @@ func CreateTable(db sql.DB) (err error) {
     		created_at BIGINT NOT NULL,
     		updated_at BIGINT NOT NULL);
 `,
+		`CREATE TABLE IF NOT EXISTS booking_detail (
+			booking_id INT NOT NULL,
+			service_id INT NOT NULL,
+			FOREIGN KEY (booking_id) REFERENCES Booking(ID) ON DELETE CASCADE
+		);`,
 	}
 
 	for _, query := range tableQueries {

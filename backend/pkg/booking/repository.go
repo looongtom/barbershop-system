@@ -14,4 +14,5 @@ type BookingRepository interface {
 	FindBookingByUserOrBarber(ctx context.Context, findReq api.FindBookingRequest) ([]entity.Booking, error)
 
 	CreateBookingDetail(ctx context.Context, listService []int, bookingId int) error
+	//GetBookingDetail(ctx context.Context, bookingId int) ([]entity.BookingDetail, error)
 }
