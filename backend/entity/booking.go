@@ -17,11 +17,3 @@ type BookingDetail struct {
 	BookingId string `json:"booking_id"`
 	ServiceId string `json:"service_id"`
 }
-
-type TimeSlot struct {
-	ID         string `json:"id"`
-	StartTime  int64  `json:"start_time"`
-	BookedDate int64  `json:"booked_date"`
-	Status     string `json:"status"`
-	BarberId   string `json:"barber_id"`
-}

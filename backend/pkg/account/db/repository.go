@@ -1,4 +1,4 @@
-package mongodb
+package db
 
 import (
 	"DoAn/database"
@@ -153,6 +153,21 @@ func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, e
 		return nil, errs
 	}
 	return refreshToken, nil
+}
+
+func (r repo) CheckExistedBarber(ctx context.Context, id int) (bool, error) {
+	query := `
+	SELECT id,role from account where id = $1 ;
+`
+	var checkedId, checkedRole int
+	err := r.db.QueryRow(query, id).Scan(&checkedId, &checkedRole)
+	if err != nil {
+		return false, err
+	}
+	if checkedRole != entity.RoleBarber {
+		return false, nil
+	}
+	return true, nil
 }
 func (r repo) GetProfile(ctx context.Context, email string) (interface{}, error) {
 	var result entity.Account

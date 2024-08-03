@@ -45,6 +45,15 @@ func (u UserServiceStruct) GetProfile(ctx context.Context, email string) (interf
 	}
 	return data, nil
 }
+
+func (u UserServiceStruct) CheckExistedBarber(ctx context.Context, id int) (interface{}, error) {
+	data, err := u.repository.CheckExistedBarber(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (u UserServiceStruct) RefreshToken(ctx context.Context, username string) (interface{}, error) {
 	data, err := u.repository.RefreshToken(ctx, username)
 	if err != nil {

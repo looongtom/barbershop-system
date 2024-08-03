@@ -3,7 +3,7 @@ package main
 import (
 	"DoAn/database"
 	"DoAn/pkg/account"
-	repository "DoAn/pkg/account/mongodb"
+	repository "DoAn/pkg/account/db"
 	"DoAn/pkg/account/service"
 	"DoAn/pkg/account/transport"
 	"github.com/joho/godotenv"
