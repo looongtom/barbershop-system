@@ -49,8 +49,10 @@ func (r repo) GetListTimeSlotByBarberId(ctx context.Context, findTimeSlot api.Fi
 		or start_time = $3
 		or status = $4
 `
-	params := []interface{}{findTimeSlot.BarberId, findTimeSlot.BookedDate, findTimeSlot.StartTime, findTimeSlot.Status}
-	rows, err := r.db.Query(query, params...)
+	rows, err := r.db.Query(query, findTimeSlot.BarberId,
+		findTimeSlot.BookedDate,
+		findTimeSlot.StartTime,
+		findTimeSlot.Status)
 
 	if err != nil {
 		r.logger.Log("error while querying")

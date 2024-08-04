@@ -20,9 +20,10 @@ func (G GRPCServer) CheckExistedBarber(ctx context.Context, request *pb.CheckExi
 	}
 
 	var grpcResp *wrapperspb.BoolValue
-	if resp.(bool) {
+	switch resp.(bool) {
+	case true:
 		grpcResp = wrapperspb.Bool(true)
-	} else {
+	default:
 		grpcResp = wrapperspb.Bool(false)
 	}
 
