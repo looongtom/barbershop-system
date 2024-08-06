@@ -49,6 +49,16 @@ func MakeCreateTimeSlotEndpoints(svc timeslot.TimeSlotService) endpoint.Endpoint
 		}, err
 	}
 }
+func MakeCreateListTimeSlotEndpoints(svc timeslot.TimeSlotService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.CreateListTimeslotRequest)
+		resp, err := svc.CreateListTimeSlot(ctx, req.ListTimeslot)
+		return Response{
+			Message: "success",
+			Data:    resp,
+		}, err
+	}
+}
 
 func DecodeCreateTimeSlotRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var request api.CreateOrUpdateTimeslotRequest
@@ -70,6 +80,33 @@ func DecodeCreateTimeSlotRequest(_ context.Context, r *http.Request) (interface{
 			return nil, errors.New("missing BarberId")
 		}
 	}
+	return request, nil
+}
+
+func DecodeCreateListTimeSlotRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var request api.CreateListTimeslotRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, timeslot := range request.ListTimeslot {
+		if &timeslot.ID == nil {
+			if timeslot.StartTime == "" || &timeslot.StartTime == nil {
+				return nil, errors.New("one of timeslot missing start time")
+			}
+			if timeslot.BookedDate == "" || &timeslot.BookedDate == nil {
+				return nil, errors.New("one of timeslot missing BookedDate")
+			}
+			if timeslot.Status == "" || &timeslot.Status == nil {
+				return nil, errors.New("one of timeslot missing Status")
+			}
+			if &timeslot.BarberId == nil {
+				return nil, errors.New("one of timeslot missing BarberId")
+			}
+		}
+	}
+
 	return request, nil
 }
 

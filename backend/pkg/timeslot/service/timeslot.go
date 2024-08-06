@@ -1,11 +1,13 @@
 package service
 
 import (
+	"DoAn/entity"
 	"DoAn/pkg/timeslot"
 	"DoAn/pkg/timeslot/api"
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/go-kit/kit/log"
 )
 
@@ -19,6 +21,35 @@ func NewService(repo timeslot.TimeslotRepository, logger log.Logger) timeslot.Ti
 		repository: repo,
 		logger:     logger,
 	}
+}
+
+func (t TimeSlotService) CreateListTimeSlot(ctx context.Context, timeslots []api.CreateOrUpdateTimeslotRequest) (interface{}, error) {
+	var listRes []entity.Timeslot
+	for _, timeslot := range timeslots {
+		ok, err := t.repository.CheckAvailableTimeSlot(ctx, api.CheckExistedTimeslotRequest{
+			BarberId:   timeslot.BarberId,
+			StartTime:  timeslot.StartTime,
+			BookedDate: timeslot.BookedDate,
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			t.logger.Log(fmt.Sprintf("error %v while checking available timeslot %v \n", err, timeslot))
+			continue
+		}
+		if ok {
+			t.logger.Log(fmt.Sprintf("error timeslot already exist: %v \n", err, timeslot))
+			continue
+		}
+		res, err := t.repository.CreateTimeSlot(ctx, timeslot)
+		if err != nil {
+			return nil, err
+		} else {
+			listRes = append(listRes, res)
+		}
+	}
+	if len(listRes) == 0 {
+		return nil, errors.New("create timeslot failed")
+	}
+	return listRes, nil
 }
 
 func (t TimeSlotService) CreateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTimeslotRequest) (interface{}, error) {

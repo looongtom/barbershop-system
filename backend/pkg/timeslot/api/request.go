@@ -21,6 +21,10 @@ type CreateOrUpdateTimeslotRequest struct {
 	Status     string `json:"status,omitempty"`
 }
 
+type CreateListTimeslotRequest struct {
+	ListTimeslot []CreateOrUpdateTimeslotRequest `json:"list"`
+}
+
 type CheckExistedTimeslotRequest struct {
 	BarberId   int    `json:"barber_id,omitempty"`
 	StartTime  string `json:"start_time,omitempty"`

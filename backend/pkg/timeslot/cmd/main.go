@@ -51,6 +51,12 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	CreateListTimeslotHandler := httptransport.NewServer(
+		transport.MakeCreateListTimeSlotEndpoints(svc),
+		transport.DecodeCreateListTimeSlotRequest,
+		transport.EncodeResponse,
+	)
+
 	//UpdateTimeslotHandler := httptransport.NewServer(
 	//	transport.MakeCreateTimeSlotEndpoints(svc),
 	//	transport.DecodeUpdatedTimeSlotRequest,
@@ -65,6 +71,7 @@ func main() {
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Methods("POST").Path("/timeslot/create-or-update").Handler(CreateOrUpdateTimeslotHandler)
+	r.Methods("POST").Path("/timeslot/create-by-list").Handler(CreateListTimeslotHandler)
 	r.Methods("POST").Path("/timeslot/find").Handler(GetListTimeSlotByBarberIdHandler)
 
 	logger.Log("msg", "HTTP", "addr", ":8003")

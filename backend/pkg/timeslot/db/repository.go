@@ -34,7 +34,13 @@ func (r repo) CreateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTim
 	query := `
 		INSERT INTO timeslot(start_time, booked_date, status, barber_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING id
 	`
-	err := r.db.QueryRow(query, newTimeSlot.StartTime, newTimeSlot.BookedDate, newTimeSlot.Status, newTimeSlot.BarberId, newTimeSlot.CreatedAt, newTimeSlot.UpdatedAt).Scan(&newTimeSlot.ID)
+	err := r.db.QueryRow(query,
+		newTimeSlot.StartTime,
+		newTimeSlot.BookedDate,
+		newTimeSlot.Status,
+		newTimeSlot.BarberId,
+		newTimeSlot.CreatedAt,
+		newTimeSlot.UpdatedAt).Scan(&newTimeSlot.ID)
 	if err != nil {
 		r.logger.Log("error while inserting data")
 		return entity.Timeslot{}, err
