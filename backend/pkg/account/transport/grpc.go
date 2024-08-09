@@ -13,21 +13,14 @@ type GRPCServer struct {
 	checkExistedBarber gt.Handler
 }
 
-func (G GRPCServer) CheckExistedBarber(ctx context.Context, request *pb.CheckExistedBarberRequest) (*wrapperspb.BoolValue, error) {
+func (G GRPCServer) CheckExistedBarber(ctx context.Context, request *pb.CheckExistedBarberRequest) (*wrapperspb.StringValue, error) {
 	_, resp, err := G.checkExistedBarber.ServeGRPC(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-
-	var grpcResp *wrapperspb.BoolValue
-	switch resp.(bool) {
-	case true:
-		grpcResp = wrapperspb.Bool(true)
-	default:
-		grpcResp = wrapperspb.Bool(false)
-	}
-
-	return grpcResp, nil
+	var resGrpc wrapperspb.StringValue
+	resGrpc.Value = resp.(string)
+	return &resGrpc, nil
 }
 
 func NewGRPCServer(_ context.Context, endpoints endpoint.Endpoints) pb.UserServiceServer {

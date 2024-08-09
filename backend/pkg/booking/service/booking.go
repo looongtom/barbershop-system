@@ -1,23 +1,28 @@
 package service
 
 import (
+	"DoAn/pkg/account/pb"
 	"DoAn/pkg/booking"
 	"DoAn/pkg/booking/api"
 	"context"
 	"fmt"
 	"github.com/go-kit/kit/log"
+	"google.golang.org/grpc"
 	"strconv"
+	"time"
 )
 
 type BookingStruct struct {
 	repository booking.BookingRepository
+	conn       *grpc.ClientConn
 	logger     log.Logger
 }
 
-func NewService(repo booking.BookingRepository, logger log.Logger) booking.BookingService {
+func NewService(repo booking.BookingRepository, logger log.Logger, conn *grpc.ClientConn) booking.BookingService {
 	return &BookingStruct{
 		repository: repo,
 		logger:     logger,
+		conn:       conn,
 	}
 }
 
@@ -31,6 +36,30 @@ func (b BookingStruct) FindBookingByUserOrBarber(ctx context.Context, findReq ap
 }
 
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
+	//call grpc api
+	client := pb.NewUserServiceClient(b.conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	checkBarber, err := client.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(booking.BarberId)})
+	if err != nil {
+		fmt.Printf("error when checking account: %v", err)
+		return nil, err
+	}
+	if checkBarber.Value != "BARBER" {
+		fmt.Println("barber id is not valid")
+		return nil, err
+	}
+
+	checkUser, err := client.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(booking.CustomerID)})
+	if err != nil {
+		fmt.Printf("error when checking account: %v", err)
+		return nil, err
+	}
+
+	fmt.Printf("checkBarber: %s", checkBarber.Value)
+	fmt.Printf("checkUser: %s", checkUser.Value)
+
 	resp, err := b.repository.CreateBooking(ctx, booking)
 	if err != nil {
 		errMsg := err.Error()

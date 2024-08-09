@@ -6,6 +6,7 @@ import (
 	repository "DoAn/pkg/booking/db"
 	"DoAn/pkg/booking/service"
 	"DoAn/pkg/booking/transport"
+	"google.golang.org/grpc"
 
 	"fmt"
 	logV "log"
@@ -40,11 +41,17 @@ func main() {
 	svc = service.BookingStruct{}
 	{
 		repo, err := repository.NewRepository(collectionPostgres, logger)
+		connGrpc, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		if err != nil {
+			fmt.Printf("did not connect: %v", err)
+			logV.Fatalf("Error getting env, %v", err)
+		}
+		defer connGrpc.Close()
 		if err != nil {
 			fmt.Printf("Error getting env, %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
-		svc = service.NewService(repo, logger)
+		svc = service.NewService(repo, logger, connGrpc)
 	}
 
 	CreateBookingHandler := httptransport.NewServer(

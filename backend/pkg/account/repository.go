@@ -14,5 +14,5 @@ type UserRepository interface {
 	ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error)
 	RefreshToken(ctx context.Context, username string) (interface{}, error)
 
-	CheckExistedBarber(ctx context.Context, id int) (bool, error)
+	CheckExistedBarber(ctx context.Context, id int) (string, error)
 }

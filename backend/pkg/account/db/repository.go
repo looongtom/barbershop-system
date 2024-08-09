@@ -155,19 +155,25 @@ func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, e
 	return refreshToken, nil
 }
 
-func (r repo) CheckExistedBarber(ctx context.Context, id int) (bool, error) {
+func (r repo) CheckExistedBarber(ctx context.Context, id int) (string, error) {
 	query := `
 	SELECT id,role from account where id = $1 ;
 `
 	var checkedId, checkedRole int
 	err := r.db.QueryRow(query, id).Scan(&checkedId, &checkedRole)
+	roleName := "UNKNOWN"
 	if err != nil {
-		return false, err
+		return roleName, err
 	}
-	if checkedRole != entity.RoleBarber {
-		return false, nil
+	switch checkedRole {
+	case entity.RoleBarber:
+		roleName = "BARBER"
+	case entity.RoleUser:
+		roleName = "USER"
+	case entity.RoleAdmin:
+		roleName = "ADMIN"
 	}
-	return true, nil
+	return roleName, nil
 }
 func (r repo) GetProfile(ctx context.Context, email string) (interface{}, error) {
 	var result entity.Account

@@ -7,7 +7,7 @@ import (
 )
 
 type CheckExistedBarberRequest struct {
-	BarberID int `json:"barber_id"`
+	UserId int `json:"user_id"`
 }
 
 type Endpoints struct {
@@ -17,6 +17,6 @@ type Endpoints struct {
 func MakeCheckExistedBarberEndpoint(s account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(CheckExistedBarberRequest)
-		return s.CheckExistedBarber(ctx, req.BarberID)
+		return s.CheckExistedBarber(ctx, req.UserId)
 	}
 }
