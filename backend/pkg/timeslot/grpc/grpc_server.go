@@ -54,8 +54,7 @@ func main() {
 				CheckExistTimeslotEndpoint:   endpoint.MakeCheckExistTimeslotEndpoint(svc),
 				UpdateTimeslotStatusEndpoint: endpoint.MakeUpdateTimeslotStatusEndpoint(svc),
 			}))
-
-		fmt.Println("gRPC server is running on port 9093")
+		logger.Log("msg", "Timeslot gRPC server", "port", ":9093")
 		errors <- grpcServer.Serve(listener)
 	}()
 	fmt.Println(<-errors)

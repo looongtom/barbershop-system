@@ -53,7 +53,7 @@ func main() {
 		pb.RegisterUserServiceServer(gRPCServer, transport.NewGRPCServer(ctx,
 			endpoint.Endpoints{CheckExistedBarberEndpoint: endpoint.MakeCheckExistedBarberEndpoint(svc)}))
 
-		fmt.Println("gRPC server is running on port 9090")
+		logger.Log("msg", "Account gRPC server", "port", ":9090")
 		errors <- gRPCServer.Serve(listener)
 	}()
 

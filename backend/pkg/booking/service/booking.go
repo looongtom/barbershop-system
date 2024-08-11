@@ -4,6 +4,7 @@ import (
 	"DoAn/pkg/account/pb"
 	"DoAn/pkg/booking"
 	"DoAn/pkg/booking/api"
+	pbService "DoAn/pkg/servicing/pb"
 	pbTimeslot "DoAn/pkg/timeslot/pb"
 	"errors"
 
@@ -20,15 +21,17 @@ type BookingStruct struct {
 	repository   booking.BookingRepository
 	connAccount  *grpc.ClientConn
 	connTimeslot *grpc.ClientConn
+	connService  *grpc.ClientConn
 	logger       log.Logger
 }
 
-func NewService(repo booking.BookingRepository, logger log.Logger, conn *grpc.ClientConn, conn2 *grpc.ClientConn) booking.BookingService {
+func NewService(repo booking.BookingRepository, logger log.Logger, conn *grpc.ClientConn, conn2 *grpc.ClientConn, conn3 *grpc.ClientConn) booking.BookingService {
 	return &BookingStruct{
 		repository:   repo,
 		logger:       logger,
 		connAccount:  conn,
 		connTimeslot: conn2,
+		connService:  conn3,
 	}
 }
 
@@ -100,14 +103,44 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 }
 
 func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, error) {
+	clientService := pbService.NewServicingServiceClient(b.connService)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
 	idValue, _ := strconv.Atoi(id)
 	resp, err := b.repository.GetBookingById(ctx, idValue)
-
 	if err != nil {
 		errMsg := err.Error()
 		return errMsg, err
 	}
-	return resp, nil
+	listIdServices, err := b.repository.GetListIdServiceByBookingId(ctx, idValue)
+	if err != nil {
+		errMsg := err.Error()
+		return errMsg, err
+	}
+	var listServiceName []string
+	for _, id := range listIdServices {
+		service, err := clientService.GetServiceById(ctx, &pbService.GetServiceByIdRequest{Id: int32(id)})
+		if err != nil {
+			fmt.Printf("error when getting service: %v", err)
+			return nil, err
+		}
+		listServiceName = append(listServiceName, service.Name)
+	}
+
+	return api.BookingResponse{
+		ID:           resp.ID,
+		CustomerID:   resp.CustomerID,
+		BarberId:     resp.BarberId,
+		ResultId:     resp.ResultId,
+		Status:       resp.Status,
+		Price:        resp.Price,
+		SlotId:       resp.SlotId,
+		FeedBackId:   resp.FeedBackId,
+		CreatedAt:    resp.CreatedAt,
+		UpdatedAt:    resp.UpdatedAt,
+		ListServices: listServiceName,
+	}, nil
 }
 
 func (b BookingStruct) GetListBooking(ctx context.Context) (interface{}, error) {

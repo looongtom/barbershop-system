@@ -53,18 +53,29 @@ func main() {
 			logV.Fatalf("Error getting env, %v", err)
 		}
 
-		connGrpcTimeslit, err := grpc.Dial(os.Getenv("GRPC_TIMESLOT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		connGrpcTimeslot, err := grpc.Dial(os.Getenv("GRPC_TIMESLOT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
 			fmt.Printf("did not connect: %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
-		defer connGrpcTimeslit.Close()
+		defer connGrpcTimeslot.Close()
 		if err != nil {
 			fmt.Printf("Error getting env, %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
 
-		svc = service.NewService(repo, logger, connGrpcAccount, connGrpcTimeslit)
+		connGrpcService, err := grpc.Dial(os.Getenv("GRPC_SERVICE_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		if err != nil {
+			fmt.Printf("did not connect: %v", err)
+			logV.Fatalf("Error getting env, %v", err)
+		}
+		defer connGrpcService.Close()
+		if err != nil {
+			fmt.Printf("Error getting env, %v", err)
+			logV.Fatalf("Error getting env, %v", err)
+		}
+
+		svc = service.NewService(repo, logger, connGrpcAccount, connGrpcTimeslot, connGrpcService)
 	}
 
 	CreateBookingHandler := httptransport.NewServer(

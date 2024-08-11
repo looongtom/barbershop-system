@@ -82,6 +82,24 @@ func (r repo) CreateBooking(ctx context.Context, booking api.BookingRequest) (en
 	return newBooking, nil
 }
 
+func (r repo) GetListIdServiceByBookingId(ctx context.Context, id int) ([]int, error) {
+	var listIds []int
+	rows, err := r.db.Query("SELECT service_id FROM booking_detail WHERE booking_id = $1", id)
+	if err != nil {
+		r.logger.Log("error while querying")
+		return nil, err
+	}
+	for rows.Next() {
+		var id int
+		err = rows.Scan(&id)
+		if err != nil {
+			r.logger.Log("error while scanning")
+			return nil, err
+		}
+		listIds = append(listIds, id)
+	}
+	return listIds, nil
+}
 func (r repo) GetListBooking(ctx context.Context) ([]entity.Booking, error) {
 	var listBooking []entity.Booking
 	rows, err := r.db.Query("SELECT * FROM booking")

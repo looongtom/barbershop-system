@@ -52,7 +52,9 @@ func main() {
 			endpoint.Endpoints{
 				GetServiceById: endpoint.MakeGetServiceByIdEndpoint(svc),
 			}))
-		fmt.Println("gRPC server is running on port 9093")
+		logger.Log("msg", "Service gRPC server", "port", ":9091")
+
+		//fmt.Println("Service gRPC server is running on port 9091")
 		errors <- grpcServer.Serve(listener)
 	}()
 	fmt.Println(<-errors)
