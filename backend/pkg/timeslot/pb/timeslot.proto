@@ -18,6 +18,11 @@ message TimeslotList{
   repeated Timeslot timeslots=1;
 }
 
+message UpdateStatusTimeslotRequest{
+  int32 id=1;
+  string status=2;
+}
+
 message FindTimeslotRequest{
   string start_time=1;
   string booked_date=2;
@@ -25,6 +30,12 @@ message FindTimeslotRequest{
   int32 barber_id=4;
 }
 
+message CheckAvailableTimeslotRequest{
+  int32 id=1;
+}
+
 service TimeslotService{
   rpc FindExistTimeslot(FindTimeslotRequest) returns (TimeslotList) {};
+  rpc CheckAvailableTimeslot(CheckAvailableTimeslotRequest) returns (Timeslot) {};
+  rpc UpdateStatusTimeslot(UpdateStatusTimeslotRequest) returns (Timeslot) {};
 }

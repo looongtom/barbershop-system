@@ -13,6 +13,15 @@ type FindTimeslotRequest struct {
 	Status     string `json:"status"`
 }
 
+type CheckExistTimeslotRequest struct {
+	Id int `json:"id"`
+}
+
+type UpdateTimeslotRequest struct {
+	ID     int    `json:"id"`
+	Status string `json:"status"`
+}
+
 type CreateOrUpdateTimeslotRequest struct {
 	ID         int    `json:"id,omitempty"`
 	BarberId   int    `json:"barber_id,omitempty"`

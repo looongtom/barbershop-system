@@ -23,6 +23,14 @@ func NewService(repo timeslot.TimeslotRepository, logger log.Logger) timeslot.Ti
 	}
 }
 
+func (t TimeSlotService) CheckExistTimeslot(ctx context.Context, id int) (interface{}, error) {
+	res, err := t.repository.CheckExistedTimeSlotById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (t TimeSlotService) CreateListTimeSlot(ctx context.Context, timeslots []api.CreateOrUpdateTimeslotRequest) (interface{}, error) {
 	var listRes []entity.Timeslot
 	for _, timeslot := range timeslots {
@@ -52,7 +60,26 @@ func (t TimeSlotService) CreateListTimeSlot(ctx context.Context, timeslots []api
 	return listRes, nil
 }
 
-func (t TimeSlotService) CreateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTimeslotRequest) (interface{}, error) {
+func (t TimeSlotService) UpdateStatusTimeSlot(ctx context.Context, id int, status string) (interface{}, error) {
+	existedTimeslot, err := t.repository.CheckExistedTimeSlotById(ctx, id)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	if &existedTimeslot != nil {
+		if existedTimeslot.Status == status {
+			return nil, errors.New("status already updated")
+		}
+		res, err := t.repository.UpdateStatusTimeSlot(ctx, id, status)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	} else {
+		return nil, errors.New("timeslot not found")
+	}
+
+}
+func (t TimeSlotService) CreateOrUpdateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTimeslotRequest) (interface{}, error) {
 	if &timeslot.ID != nil && timeslot.ID != 0 {
 		existedTimeslot, err := t.repository.CheckExistedTimeSlotById(ctx, timeslot.ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {

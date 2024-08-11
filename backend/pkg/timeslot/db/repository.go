@@ -102,6 +102,19 @@ func (r repo) CheckAvailableTimeSlot(ctx context.Context, checkExist api.CheckEx
 	}
 	return true, nil
 }
+func (r repo) UpdateStatusTimeSlot(ctx context.Context, id int, status string) (entity.Timeslot, error) {
+	updatedTime := time.Now().Unix()
+	query := `UPDATE timeslot SET status = $1, updated_at = $2 WHERE id = $3 returning id,start_time,booked_date,status,barber_id,created_at,updated_at`
+	var timeslot entity.Timeslot
+	err := r.db.QueryRow(query, status, updatedTime, id).
+		Scan(&timeslot.ID, &timeslot.StartTime, &timeslot.BookedDate, &timeslot.Status, &timeslot.BarberId, &timeslot.CreatedAt, &timeslot.UpdatedAt)
+	if err != nil {
+		r.logger.Log("error while updating data")
+		return entity.Timeslot{}, err
+	}
+	return timeslot, nil
+}
+
 func (r repo) UpdateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTimeslotRequest) (entity.Timeslot, error) {
 	updatedTime := time.Now().Unix()
 	query := `UPDATE timeslot SET start_time = $1, booked_date = $2, status = $3, barber_id = $4, updated_at = $5 WHERE id = $6`

@@ -49,7 +49,11 @@ func main() {
 		}
 		grpcServer := grpc.NewServer()
 		pb.RegisterTimeslotServiceServer(grpcServer, transport.NewGRPCServer(ctx,
-			endpoint.Endpoints{FindExistTimeslotEndpoint: endpoint.MakeFindExistTimeslotEndpoint(svc)}))
+			endpoint.Endpoints{
+				FindExistTimeslotEndpoint:    endpoint.MakeFindExistTimeslotEndpoint(svc),
+				CheckExistTimeslotEndpoint:   endpoint.MakeCheckExistTimeslotEndpoint(svc),
+				UpdateTimeslotStatusEndpoint: endpoint.MakeUpdateTimeslotStatusEndpoint(svc),
+			}))
 
 		fmt.Println("gRPC server is running on port 9093")
 		errors <- grpcServer.Serve(listener)

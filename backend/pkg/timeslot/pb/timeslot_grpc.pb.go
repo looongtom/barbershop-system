@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TimeslotService_FindExistTimeslot_FullMethodName = "/TimeslotService/FindExistTimeslot"
+	TimeslotService_FindExistTimeslot_FullMethodName      = "/TimeslotService/FindExistTimeslot"
+	TimeslotService_CheckAvailableTimeslot_FullMethodName = "/TimeslotService/CheckAvailableTimeslot"
+	TimeslotService_UpdateStatusTimeslot_FullMethodName   = "/TimeslotService/UpdateStatusTimeslot"
 )
 
 // TimeslotServiceClient is the client API for TimeslotService service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TimeslotServiceClient interface {
 	FindExistTimeslot(ctx context.Context, in *FindTimeslotRequest, opts ...grpc.CallOption) (*TimeslotList, error)
+	CheckAvailableTimeslot(ctx context.Context, in *CheckAvailableTimeslotRequest, opts ...grpc.CallOption) (*Timeslot, error)
+	UpdateStatusTimeslot(ctx context.Context, in *UpdateStatusTimeslotRequest, opts ...grpc.CallOption) (*Timeslot, error)
 }
 
 type timeslotServiceClient struct {
@@ -47,11 +51,33 @@ func (c *timeslotServiceClient) FindExistTimeslot(ctx context.Context, in *FindT
 	return out, nil
 }
 
+func (c *timeslotServiceClient) CheckAvailableTimeslot(ctx context.Context, in *CheckAvailableTimeslotRequest, opts ...grpc.CallOption) (*Timeslot, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Timeslot)
+	err := c.cc.Invoke(ctx, TimeslotService_CheckAvailableTimeslot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *timeslotServiceClient) UpdateStatusTimeslot(ctx context.Context, in *UpdateStatusTimeslotRequest, opts ...grpc.CallOption) (*Timeslot, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Timeslot)
+	err := c.cc.Invoke(ctx, TimeslotService_UpdateStatusTimeslot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TimeslotServiceServer is the server API for TimeslotService service.
 // All implementations should embed UnimplementedTimeslotServiceServer
 // for forward compatibility.
 type TimeslotServiceServer interface {
 	FindExistTimeslot(context.Context, *FindTimeslotRequest) (*TimeslotList, error)
+	CheckAvailableTimeslot(context.Context, *CheckAvailableTimeslotRequest) (*Timeslot, error)
+	UpdateStatusTimeslot(context.Context, *UpdateStatusTimeslotRequest) (*Timeslot, error)
 }
 
 // UnimplementedTimeslotServiceServer should be embedded to have
@@ -63,6 +89,12 @@ type UnimplementedTimeslotServiceServer struct{}
 
 func (UnimplementedTimeslotServiceServer) FindExistTimeslot(context.Context, *FindTimeslotRequest) (*TimeslotList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindExistTimeslot not implemented")
+}
+func (UnimplementedTimeslotServiceServer) CheckAvailableTimeslot(context.Context, *CheckAvailableTimeslotRequest) (*Timeslot, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckAvailableTimeslot not implemented")
+}
+func (UnimplementedTimeslotServiceServer) UpdateStatusTimeslot(context.Context, *UpdateStatusTimeslotRequest) (*Timeslot, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateStatusTimeslot not implemented")
 }
 func (UnimplementedTimeslotServiceServer) testEmbeddedByValue() {}
 
@@ -102,6 +134,42 @@ func _TimeslotService_FindExistTimeslot_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TimeslotService_CheckAvailableTimeslot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckAvailableTimeslotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TimeslotServiceServer).CheckAvailableTimeslot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TimeslotService_CheckAvailableTimeslot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TimeslotServiceServer).CheckAvailableTimeslot(ctx, req.(*CheckAvailableTimeslotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TimeslotService_UpdateStatusTimeslot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateStatusTimeslotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TimeslotServiceServer).UpdateStatusTimeslot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TimeslotService_UpdateStatusTimeslot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TimeslotServiceServer).UpdateStatusTimeslot(ctx, req.(*UpdateStatusTimeslotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TimeslotService_ServiceDesc is the grpc.ServiceDesc for TimeslotService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -112,6 +180,14 @@ var TimeslotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindExistTimeslot",
 			Handler:    _TimeslotService_FindExistTimeslot_Handler,
+		},
+		{
+			MethodName: "CheckAvailableTimeslot",
+			Handler:    _TimeslotService_CheckAvailableTimeslot_Handler,
+		},
+		{
+			MethodName: "UpdateStatusTimeslot",
+			Handler:    _TimeslotService_UpdateStatusTimeslot_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

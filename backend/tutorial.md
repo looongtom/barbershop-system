@@ -8,3 +8,7 @@ protoc --go-grpc_out=require_unimplemented_servers=false:. --go-grpc_opt=paths=s
 
 protoc --go_out=. --go_opt=paths=source_relative timeslot.proto
 protoc --go-grpc_out=require_unimplemented_servers=false:. --go-grpc_opt=paths=source_relative timeslot.proto
+
+*generate servicing*
+protoc --go_out=. --go_opt=paths=source_relative servicing.proto
+protoc --go-grpc_out=require_unimplemented_servers=false:. --go-grpc_opt=paths=source_relative servicing.proto

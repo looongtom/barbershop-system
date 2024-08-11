@@ -38,7 +38,7 @@ func MakeGetTimeSlotEndpoints(svc timeslot.TimeSlotService) endpoint.Endpoint {
 func MakeCreateTimeSlotEndpoints(svc timeslot.TimeSlotService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.CreateOrUpdateTimeslotRequest)
-		resp, err := svc.CreateTimeSlot(ctx, req)
+		resp, err := svc.CreateOrUpdateTimeSlot(ctx, req)
 		message := "updated successfully"
 		if req.ID == 0 {
 			message = "created successfully"

@@ -7,20 +7,29 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-type FindExistTimeslotRequest struct {
-	StartTime  string `json:"start_time"`
-	BookedDate string `json:"booked_date"`
-	Status     string `json:"status"`
-	BarberId   int    `json:"barber_id"`
-}
-
 type Endpoints struct {
-	FindExistTimeslotEndpoint endpoint.Endpoint
+	FindExistTimeslotEndpoint    endpoint.Endpoint
+	CheckExistTimeslotEndpoint   endpoint.Endpoint
+	UpdateTimeslotStatusEndpoint endpoint.Endpoint
 }
 
 func MakeFindExistTimeslotEndpoint(svc timeslot.TimeSlotService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(api.FindTimeslotRequest)
 		return svc.GetListTimeSlotByBarberId(ctx, req)
+	}
+}
+
+func MakeCheckExistTimeslotEndpoint(svc timeslot.TimeSlotService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(api.CheckExistTimeslotRequest)
+		return svc.CheckExistTimeslot(ctx, req.Id)
+	}
+}
+
+func MakeUpdateTimeslotStatusEndpoint(svc timeslot.TimeSlotService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(api.UpdateTimeslotRequest)
+		return svc.UpdateStatusTimeSlot(ctx, req.ID, req.Status)
 	}
 }

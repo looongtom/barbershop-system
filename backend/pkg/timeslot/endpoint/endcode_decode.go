@@ -19,15 +19,46 @@ func DecodeFindExistTimeslot(_ context.Context, r interface{}) (interface{}, err
 
 func EncodeFindExistTimeslot(_ context.Context, r interface{}) (interface{}, error) {
 	res := r.([]entity.Timeslot)
-	//var listTimeslot []entity.Timeslot
-	//for _, v := range res.Timeslots {
-	//	listTimeslot = append(listTimeslot, entity.Timeslot{
-	//		ID:         int(v.Id),
-	//		BarberId:   int(v.BarberId),
-	//		StartTime:  v.StartTime,
-	//		BookedDate: v.BookedDate,
-	//		Status:     v.Status,
-	//	})
-	//}
 	return res, nil
+}
+
+func DecodeCheckExistTimeslot(ctx context.Context, i interface{}) (request interface{}, err error) {
+	req := i.(*pb.CheckAvailableTimeslotRequest)
+	return api.CheckExistTimeslotRequest{
+		Id: int(req.Id),
+	}, nil
+}
+
+func DecodeUpdateTimeslotStatus(ctx context.Context, i interface{}) (request interface{}, err error) {
+	req := i.(*pb.UpdateStatusTimeslotRequest)
+	return api.UpdateTimeslotRequest{
+		ID:     int(req.Id),
+		Status: req.Status,
+	}, nil
+}
+
+func EncodeCheckExistTimeslot(ctx context.Context, i interface{}) (response interface{}, err error) {
+	resp := i.(*entity.Timeslot)
+	return &pb.Timeslot{
+		Id:         int32(resp.ID),
+		StartTime:  resp.StartTime,
+		BookedDate: resp.BookedDate,
+		Status:     resp.Status,
+		BarberId:   int32(resp.BarberId),
+		CreatedAt:  resp.CreatedAt,
+		UpdatedAt:  resp.UpdatedAt,
+	}, nil
+}
+
+func EncodeUpdateTimeslotStatus(ctx context.Context, i interface{}) (response interface{}, err error) {
+	resp := i.(entity.Timeslot)
+	return &pb.Timeslot{
+		Id:         int32(resp.ID),
+		StartTime:  resp.StartTime,
+		BookedDate: resp.BookedDate,
+		Status:     resp.Status,
+		BarberId:   int32(resp.BarberId),
+		CreatedAt:  resp.CreatedAt,
+		UpdatedAt:  resp.UpdatedAt,
+	}, nil
 }

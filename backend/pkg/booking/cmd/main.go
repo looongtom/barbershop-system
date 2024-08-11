@@ -41,17 +41,30 @@ func main() {
 	svc = service.BookingStruct{}
 	{
 		repo, err := repository.NewRepository(collectionPostgres, logger)
-		connGrpc, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+
+		connGrpcAccount, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
 			fmt.Printf("did not connect: %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
-		defer connGrpc.Close()
+		defer connGrpcAccount.Close()
 		if err != nil {
 			fmt.Printf("Error getting env, %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
-		svc = service.NewService(repo, logger, connGrpc)
+
+		connGrpcTimeslit, err := grpc.Dial(os.Getenv("GRPC_TIMESLOT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		if err != nil {
+			fmt.Printf("did not connect: %v", err)
+			logV.Fatalf("Error getting env, %v", err)
+		}
+		defer connGrpcTimeslit.Close()
+		if err != nil {
+			fmt.Printf("Error getting env, %v", err)
+			logV.Fatalf("Error getting env, %v", err)
+		}
+
+		svc = service.NewService(repo, logger, connGrpcAccount, connGrpcTimeslit)
 	}
 
 	CreateBookingHandler := httptransport.NewServer(

@@ -57,6 +57,7 @@ func (r repo) GetListCategory(ctx context.Context) ([]entity.Category, error) {
 	}
 	return listCate, nil
 }
+
 func (r repo) GetListService(ctx context.Context) ([]entity.Servicing, error) {
 	var listService []entity.Servicing
 	rows, err := r.db.Query("SELECT * FROM servicing")
