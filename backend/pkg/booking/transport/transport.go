@@ -67,6 +67,16 @@ func MakeCreateBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
 		}, err
 	}
 }
+func MakeCreateBookingKafkaEndpoints(svc booking.BookingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.BookingRequest)
+		resp, err := svc.CreateBookingKafka(ctx, req)
+		return Response{
+			Message: "success",
+			Data:    resp,
+		}, err
+	}
+}
 
 func MakeUpdateBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {

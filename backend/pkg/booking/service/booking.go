@@ -4,9 +4,15 @@ import (
 	"DoAn/pkg/account/pb"
 	"DoAn/pkg/booking"
 	"DoAn/pkg/booking/api"
+	kafka2 "DoAn/pkg/booking/kafka"
 	pbService "DoAn/pkg/servicing/pb"
 	pbTimeslot "DoAn/pkg/timeslot/pb"
+	"encoding/json"
 	"errors"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/google/uuid"
+	"os"
+	"os/signal"
 
 	"context"
 	"fmt"
@@ -17,21 +23,31 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	groupID     = "reply-group"
+	replyTopic  = "reply"
+	kafkaBroker = "localhost:9092"
+)
+
 type BookingStruct struct {
 	repository   booking.BookingRepository
 	connAccount  *grpc.ClientConn
 	connTimeslot *grpc.ClientConn
 	connService  *grpc.ClientConn
 	logger       log.Logger
+	kafka        *kafka.Producer
 }
 
-func NewService(repo booking.BookingRepository, logger log.Logger, conn *grpc.ClientConn, conn2 *grpc.ClientConn, conn3 *grpc.ClientConn) booking.BookingService {
+func NewService(repo booking.BookingRepository, logger log.Logger,
+	conn *grpc.ClientConn, conn2 *grpc.ClientConn, conn3 *grpc.ClientConn,
+	kafka *kafka.Producer) booking.BookingService {
 	return &BookingStruct{
 		repository:   repo,
 		logger:       logger,
 		connAccount:  conn,
 		connTimeslot: conn2,
 		connService:  conn3,
+		kafka:        kafka,
 	}
 }
 
@@ -44,10 +60,86 @@ func (b BookingStruct) FindBookingByUserOrBarber(ctx context.Context, findReq ap
 	return resp, nil
 }
 
+func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
+	sentUuid := uuid.New().String()
+	kafkaBooking := api.KafkaBookingRequest{
+		UUID:          sentUuid,
+		CustomerID:    booking.CustomerID,
+		BarberId:      booking.BarberId,
+		ResultId:      booking.ResultId,
+		Status:        booking.Status,
+		Price:         booking.Price,
+		SlotId:        booking.SlotId,
+		FeedBackId:    booking.FeedBackId,
+		ListServiceId: booking.ListServiceId,
+	}
+	serializedBookingRequest, err := json.Marshal(kafkaBooking)
+	if err != nil {
+		b.logger.Log("Failed to serialize booking request: %s\n", err)
+		return nil, err
+	}
+	err = kafka2.ProduceMessage(b.kafka, "booking", serializedBookingRequest)
+	if err != nil {
+		b.logger.Log("Failed to produce message: %s\n", err)
+		return nil, err
+	}
+	fmt.Println("Message produced successfully!")
+
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": kafkaBroker,
+		"group.id":          groupID,
+		"auto.offset.reset": "earliest",
+	})
+	if err != nil {
+		fmt.Printf("Failed to create consumer: %s\n", err)
+		return nil, err
+	}
+	defer c.Close()
+	// Subscribe to the Kafka topic
+	err = c.SubscribeTopics([]string{replyTopic}, nil)
+	if err != nil {
+		fmt.Printf("Failed to subscribe to topic: %s\n", err)
+		return nil, err
+	}
+	sigchan := make(chan os.Signal, 1)
+	signal.Notify(sigchan, os.Interrupt)
+
+	run := true
+	for run == true {
+		fmt.Println("=========================Waiting for response=======================")
+		select {
+		case sig := <-sigchan:
+			fmt.Printf("Received signal %v: terminating\n", sig)
+			run = false
+		default:
+			ev := c.Poll(100)
+			if ev == nil {
+				continue
+			}
+			switch e := ev.(type) {
+			case *kafka.Message:
+				var booking api.KafkaBookingResponse
+				err := json.Unmarshal(e.Value, &booking)
+				if err != nil {
+					fmt.Printf("Failed to deserialize message: %s\n", err)
+					return booking, nil
+				}
+			case kafka.Error:
+				// Handle Kafka errors
+				fmt.Printf("Error: %v\n", e)
+				return nil, e
+			}
+		}
+	}
+
+	return nil, nil
+}
+
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
 	//call grpc api
 	client := pb.NewUserServiceClient(b.connAccount)
 	clientTimeslot := pbTimeslot.NewTimeslotServiceClient(b.connTimeslot)
+	clientService := pbService.NewServicingServiceClient(b.connService)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -78,6 +170,14 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 	if checkTimeslot.Status != "Available" {
 		fmt.Println("timeslot is not available")
 		return nil, errors.New("timeslot is not available")
+	}
+
+	for _, service := range booking.ListServiceId {
+		checkService, err := clientService.GetServiceById(ctx, &pbService.GetServiceByIdRequest{Id: int32(service)})
+		if err != nil || checkService == nil {
+			fmt.Printf("error when checking service: %v", err)
+			return nil, errors.New("error when checking service")
+		}
 	}
 
 	updatedTimeslot, err := clientTimeslot.UpdateStatusTimeslot(ctx, &pbTimeslot.UpdateStatusTimeslotRequest{Id: int32(booking.SlotId), Status: "Booked"})

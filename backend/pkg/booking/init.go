@@ -33,7 +33,5 @@ func CreateTable(db sql.DB) (err error) {
 			return fmt.Errorf("failed to create table: %v", err)
 		}
 	}
-
-	fmt.Println("Successfully created BookingDetail table!")
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 
 type BookingService interface {
 	CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error)
+	CreateBookingKafka(ctx context.Context, booking api.BookingRequest) (interface{}, error)
 	GetBooking(ctx context.Context, id string) (interface{}, error)
 	GetListBooking(ctx context.Context) (interface{}, error)
 	UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (interface{}, error)

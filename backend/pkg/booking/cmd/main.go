@@ -6,6 +6,7 @@ import (
 	repository "DoAn/pkg/booking/db"
 	"DoAn/pkg/booking/service"
 	"DoAn/pkg/booking/transport"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"google.golang.org/grpc"
 
 	"fmt"
@@ -17,6 +18,10 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+)
+
+const (
+	kafkaBroker = "localhost:9092"
 )
 
 func main() {
@@ -41,6 +46,9 @@ func main() {
 	svc = service.BookingStruct{}
 	{
 		repo, err := repository.NewRepository(collectionPostgres, logger)
+		if err != nil {
+			logV.Fatalf("Error loading repository, %v", err)
+		}
 
 		connGrpcAccount, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
@@ -74,12 +82,23 @@ func main() {
 			fmt.Printf("Error getting env, %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
-
-		svc = service.NewService(repo, logger, connGrpcAccount, connGrpcTimeslot, connGrpcService)
+		kafkaBroker, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+		if err != nil {
+			fmt.Printf("Failed to create producer: %s\n", err)
+			return
+		}
+		defer kafkaBroker.Close()
+		svc = service.NewService(repo, logger, connGrpcAccount, connGrpcTimeslot, connGrpcService, kafkaBroker)
 	}
 
 	CreateBookingHandler := httptransport.NewServer(
 		transport.MakeCreateBookingEndpoints(svc),
+		transport.DecodeCreateBookingRequest,
+		transport.EncodeResponse,
+	)
+
+	CreateBookingKafkaHandler := httptransport.NewServer(
+		transport.MakeCreateBookingKafkaEndpoints(svc),
 		transport.DecodeCreateBookingRequest,
 		transport.EncodeResponse,
 	)
@@ -105,6 +124,7 @@ func main() {
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/booking/create", CreateBookingHandler).Methods("POST")
+	r.Handle("/booking/create-kafka", CreateBookingKafkaHandler).Methods("POST")
 	r.Handle("/booking/update", UpdateBookingHandler).Methods("POST")
 	r.Handle("/booking/get-by-id", GetBookingHandler).Methods("GET")
 	r.Handle("/booking/get-list", GetListBookingHandler).Methods("GET")
