@@ -4,12 +4,10 @@ import (
 	"DoAn/pkg/booking/api"
 	kafka2 "DoAn/pkg/booking/kafka"
 	"DoAn/pkg/booking/pb"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/joho/godotenv"
-	"google.golang.org/grpc"
 	logV "log"
 	"os"
 	"os/signal"
@@ -22,19 +20,17 @@ const (
 	kafkaBroker = "localhost:9092"
 )
 
-func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, uuid string) {
+func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, topic, uuid string) {
 
-	bookingResponse := api.KafkaBookingResponse{
-		UUID:         uuid,
-		ID:           int(createBooking.Id),
-		CustomerID:   int(createBooking.CustomerId),
-		BarberId:     int(createBooking.BarberId),
-		Status:       createBooking.Status,
-		Price:        createBooking.Price,
-		SlotId:       int(createBooking.SlotId),
-		CreatedAt:    int64(createBooking.CreatedAt),
-		UpdatedAt:    int64(createBooking.UpdatedAt),
-		ListServices: createBooking.ListServiceId,
+	bookingResponse := api.BookingResponse{
+		ID:         int(createBooking.Id),
+		CustomerID: int(createBooking.CustomerId),
+		BarberId:   int(createBooking.BarberId),
+		Status:     createBooking.Status,
+		Price:      createBooking.Price,
+		SlotId:     int(createBooking.SlotId),
+		CreatedAt:  int64(createBooking.CreatedAt),
+		UpdatedAt:  int64(createBooking.UpdatedAt),
 	}
 	// Serialize the BookingRequest
 	serializedBookingRequest, err := json.Marshal(bookingResponse)
@@ -47,7 +43,7 @@ func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, uuid stri
 		return
 	}
 	// Produce the message to the Kafka topic
-	err = kafka2.ProduceMessage(kaf, replyTopic, serializedBookingRequest)
+	err = kafka2.ProduceMessage(kaf, topic, serializedBookingRequest)
 	if err != nil {
 		logV.Fatalf("Failed to produce message: %s\n", err)
 	}
@@ -68,12 +64,12 @@ func main() {
 	}
 	defer kafkaBrokerServer.Close()
 
-	connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		fmt.Printf("did not connect: %v", err)
-		logV.Fatalf("Error getting env, %v", err)
-	}
-	client := pb.NewBookingServiceClient(connGrpcBooking)
+	//connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+	//if err != nil {
+	//	fmt.Printf("did not connect: %v", err)
+	//	logV.Fatalf("Error getting env, %v", err)
+	//}
+	//client := pb.NewBookingServiceClient(connGrpcBooking)
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": kafkaBroker,
@@ -120,26 +116,26 @@ func main() {
 				}
 				fmt.Printf("Received booking: %+v\n", booking)
 
-				// Convert []int32 to []int
-				listServiceId := make([]int32, len(booking.ListServiceId))
-				for i, v := range booking.ListServiceId {
-					listServiceId[i] = int32(v)
-				}
-				createBooking, err := client.CreateBooking(context.Background(), &pb.BookingRequest{
-					CustomerId:    int32(booking.CustomerID),
-					BarberId:      int32(booking.BarberId),
-					Status:        booking.Status,
-					Price:         booking.Price,
-					SlotId:        int32(booking.SlotId),
-					ListServiceId: listServiceId,
-				})
-				if err != nil {
-					fmt.Printf("error while creating booking: %v\n", err)
-					sendKafkaResponse(kafkaBrokerServer, &pb.Booking{}, booking.UUID)
-					continue
-				}
-				fmt.Printf("Created booking successfully: %+v\n", createBooking)
-				sendKafkaResponse(kafkaBrokerServer, createBooking, booking.UUID)
+				//// Convert []int32 to []int
+				//listServiceId := make([]int32, len(booking.ListServiceId))
+				//for i, v := range booking.ListServiceId {
+				//	listServiceId[i] = int32(v)
+				//}
+				//createBooking, err := client.CreateBooking(context.Background(), &pb.BookingRequest{
+				//	CustomerId:    int32(booking.CustomerID),
+				//	BarberId:      int32(booking.BarberId),
+				//	Status:        booking.Status,
+				//	Price:         booking.Price,
+				//	SlotId:        int32(booking.SlotId),
+				//	ListServiceId: listServiceId,
+				//})
+				//if err != nil {
+				//	fmt.Printf("error while creating booking: %v\n", err)
+				//	sendKafkaResponse(kafkaBrokerServer, &pb.Booking{}, replyTopic, booking.UUID)
+				//	continue
+				//}
+				//fmt.Printf("Created booking successfully: %+v\n", createBooking)
+				//sendKafkaResponse(kafkaBrokerServer, createBooking, replyTopic, booking.UUID)
 			case kafka.Error:
 				// Handle Kafka errors
 				fmt.Printf("Error: %v\n", e)

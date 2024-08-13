@@ -7,15 +7,11 @@ import (
 	kafka2 "DoAn/pkg/booking/kafka"
 	pbService "DoAn/pkg/servicing/pb"
 	pbTimeslot "DoAn/pkg/timeslot/pb"
+	"context"
 	"encoding/json"
 	"errors"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/google/uuid"
-	"os"
-	"os/signal"
-
-	"context"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"strconv"
 	"time"
 
@@ -24,9 +20,10 @@ import (
 )
 
 const (
-	groupID     = "reply-group"
-	replyTopic  = "reply"
-	kafkaBroker = "localhost:9092"
+	groupID      = "reply-group"
+	replyTopic   = "reply"
+	bookingTopic = "booking"
+	kafkaBroker  = "localhost:9092"
 )
 
 type BookingStruct struct {
@@ -61,9 +58,7 @@ func (b BookingStruct) FindBookingByUserOrBarber(ctx context.Context, findReq ap
 }
 
 func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
-	sentUuid := uuid.New().String()
-	kafkaBooking := api.KafkaBookingRequest{
-		UUID:          sentUuid,
+	kafkaBooking := api.BookingRequest{
 		CustomerID:    booking.CustomerID,
 		BarberId:      booking.BarberId,
 		ResultId:      booking.ResultId,
@@ -78,70 +73,73 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 		b.logger.Log("Failed to serialize booking request: %s\n", err)
 		return nil, err
 	}
-	err = kafka2.ProduceMessage(b.kafka, "booking", serializedBookingRequest)
+	err = kafka2.ProduceMessage(b.kafka, bookingTopic, serializedBookingRequest)
 	if err != nil {
 		b.logger.Log("Failed to produce message: %s\n", err)
 		return nil, err
 	}
-	fmt.Println("Message produced successfully!")
 
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBroker,
-		"group.id":          groupID,
-		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		fmt.Printf("Failed to create consumer: %s\n", err)
-		return nil, err
-	}
-	defer c.Close()
-	// Subscribe to the Kafka topic
-	err = c.SubscribeTopics([]string{replyTopic}, nil)
-	if err != nil {
-		fmt.Printf("Failed to subscribe to topic: %s\n", err)
-		return nil, err
-	}
-	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, os.Interrupt)
+	//stupid receiving kafka response
+	/*
+		fmt.Println("Message produced successfully!")
 
-	run := true
-	for run == true {
-		fmt.Println("=========================Waiting for response=======================")
-		select {
-		case sig := <-sigchan:
-			fmt.Printf("Received signal %v: terminating\n", sig)
-			run = false
-		default:
-			ev := c.Poll(100)
-			if ev == nil {
-				continue
-			}
-			switch e := ev.(type) {
-			case *kafka.Message:
-				var booking api.KafkaBookingResponse
-				err := json.Unmarshal(e.Value, &booking)
-				if err != nil {
-					fmt.Printf("Failed to deserialize message: %s\n", err)
-					return nil, err
-				}
-				if sentUuid == booking.UUID {
-					fmt.Println("=========================Create booking successfully=======================")
-					return booking, nil
-				}
-			case kafka.Error:
-				// Handle Kafka errors
-				fmt.Printf("Error: %v\n", e)
-				return nil, e
+		c, err := kafka.NewConsumer(&kafka.ConfigMap{
+			"bootstrap.servers": kafkaBroker,
+			"group.id":          groupID,
+			"auto.offset.reset": "earliest",
+		})
+		if err != nil {
+			fmt.Printf("Failed to create consumer: %s\n", err)
+			return nil, err
+		}
+		defer c.Close()
+		// Subscribe to the Kafka topic
+		err = c.SubscribeTopics([]string{replyTopic}, nil)
+		if err != nil {
+			fmt.Printf("Failed to subscribe to topic: %s\n", err)
+			return nil, err
+		}
+		sigchan := make(chan os.Signal, 1)
+		signal.Notify(sigchan, os.Interrupt)
+
+		run := true
+		for run == true {
+			fmt.Println("=========================Waiting for response=======================")
+			select {
+			case sig := <-sigchan:
+				fmt.Printf("Received signal %v: terminating\n", sig)
+				run = false
 			default:
-				fmt.Printf("Ignored %v\n", e)
-				return nil, errors.New("cannot process message")
+				ev := c.Poll(100)
+				if ev == nil {
+					continue
+				}
+				switch e := ev.(type) {
+				case *kafka.Message:
+					var booking api.KafkaBookingResponse
+					err := json.Unmarshal(e.Value, &booking)
+					if err != nil {
+						fmt.Printf("Failed to deserialize message: %s\n", err)
+						return nil, err
+					}
+					if sentUuid == booking.UUID {
+						fmt.Println("=========================Receive the response after call grpc Creatbooking=======================")
+						return booking, nil
+					}
+				case kafka.Error:
+					// Handle Kafka errors
+					fmt.Printf("Error: %v\n", e)
+					return nil, e
+				default:
+					fmt.Printf("Ignored %v\n", e)
+					return nil, errors.New("cannot process message")
+				}
 			}
 		}
-	}
+	*/
 
 	return nil, nil
 }
-
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
 	//call grpc api
 	client := pb.NewUserServiceClient(b.connAccount)
@@ -200,6 +198,17 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 		errMsg := err.Error()
 		return errMsg, err
 	}
+	serializedBooking, err := json.Marshal(resp)
+	if err != nil {
+		b.logger.Log("Failed to serialize booking request: %s\n", err)
+		return nil, err
+	}
+	err = kafka2.ProduceMessage(b.kafka, bookingTopic, serializedBooking)
+	if err != nil {
+		b.logger.Log("Failed to produce message: %s\n", err)
+		return nil, err
+	}
+
 	err = b.repository.CreateBookingDetail(ctx, booking.ListServiceId, resp.ID)
 	if err != nil {
 		errMsg := err.Error()
