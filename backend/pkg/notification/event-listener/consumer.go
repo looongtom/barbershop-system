@@ -105,12 +105,10 @@ func main() {
 			fmt.Printf("Received signal %v: terminating\n", sig)
 			run = false
 		default:
-			// Poll for Kafka messages
 			ev := c.Poll(100)
 			if ev == nil {
 				continue
 			}
-
 			switch e := ev.(type) {
 			case *kafka.Message:
 				// Process the consumed message
@@ -137,6 +135,7 @@ func main() {
 				})
 				if err != nil {
 					fmt.Printf("error while creating booking: %v\n", err)
+					sendKafkaResponse(kafkaBrokerServer, &pb.Booking{}, booking.UUID)
 					continue
 				}
 				fmt.Printf("Created booking successfully: %+v\n", createBooking)

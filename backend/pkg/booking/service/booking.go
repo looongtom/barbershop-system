@@ -122,12 +122,19 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 				err := json.Unmarshal(e.Value, &booking)
 				if err != nil {
 					fmt.Printf("Failed to deserialize message: %s\n", err)
+					return nil, err
+				}
+				if sentUuid == booking.UUID {
+					fmt.Println("=========================Create booking successfully=======================")
 					return booking, nil
 				}
 			case kafka.Error:
 				// Handle Kafka errors
 				fmt.Printf("Error: %v\n", e)
 				return nil, e
+			default:
+				fmt.Printf("Ignored %v\n", e)
+				return nil, errors.New("cannot process message")
 			}
 		}
 	}

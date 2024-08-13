@@ -31,3 +31,6 @@ go.work
 
 # Ignore the .golangci.yml file
 .golangci.yml
+
+#ignore go.mod
+go.mod

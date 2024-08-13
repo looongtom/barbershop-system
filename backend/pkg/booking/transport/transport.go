@@ -71,6 +71,17 @@ func MakeCreateBookingKafkaEndpoints(svc booking.BookingService) endpoint.Endpoi
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.BookingRequest)
 		resp, err := svc.CreateBookingKafka(ctx, req)
+		if resp == nil {
+			return Response{
+				Message: "failed to create booking",
+				Data:    nil,
+			}, nil
+		} else if resp != nil && resp.(api.KafkaBookingResponse).ID == 0 {
+			return Response{
+				Message: "failed to create booking",
+				Data:    nil,
+			}, nil
+		}
 		return Response{
 			Message: "success",
 			Data:    resp,
