@@ -26,6 +26,10 @@ func main() {
 	if err != nil {
 		logV.Fatalf("Error getting env, %v", err)
 	}
+	err = criteria.CreateTable(*collectionPostgres)
+	if err != nil {
+		logV.Fatalf("Error creating table: %v", err)
+	}
 	r := mux.NewRouter()
 
 	var svc criteria.CriteriaService
@@ -37,23 +41,65 @@ func main() {
 		}
 		svc = service.NewService(repo, logger)
 	}
-	CreateCategoryHandler := httptransport.NewServer(
+	CreateOrUpdateCategoryHandler := httptransport.NewServer(
 		transport.MakeCreateCategoryEndpoints(svc),
-		transport.DecodeCreateCategoryRequest,
+		transport.DecodeCreateOrUpdateCategoryRequest,
+		transport.EncodeResponse,
+	)
+
+	CreateOrUpdateCriteriaHandler := httptransport.NewServer(
+		transport.MakeCreateOrUpdateCriteriaEndpoints(svc),
+		transport.DecodeCreateOrUpdateCriteriaRequest,
+		transport.EncodeResponse,
+	)
+
+	GetCriteriaHandler := httptransport.NewServer(
+		transport.MakeGetCriteriaEndpoints(svc),
+		transport.DecodeGetRequest,
+		transport.EncodeResponse,
+	)
+
+	GetCategoryHandler := httptransport.NewServer(
+		transport.MakeGetCategoryEndpoints(svc),
+		transport.DecodeGetRequest,
+		transport.EncodeResponse,
+	)
+
+	GetListCategoryHandler := httptransport.NewServer(
+		transport.MakeGetListCategoryEndpoints(svc),
+		transport.DecodeEmptyRequest,
+		transport.EncodeResponse,
+	)
+
+	GetListCriteriaHandler := httptransport.NewServer(
+		transport.MakeGetListCriteriaEndpoints(svc),
+		transport.DecodeEmptyRequest,
+		transport.EncodeResponse,
+	)
+
+	DeleteCategoryHandler := httptransport.NewServer(
+		transport.MakeDeleteCategoryEndpoints(svc),
+		transport.DecodeGetRequest,
+		transport.EncodeResponse,
+	)
+
+	DeleteCriteriaHandler := httptransport.NewServer(
+		transport.MakeDeleteCriteriaEndpoints(svc),
+		transport.DecodeGetRequest,
 		transport.EncodeResponse,
 	)
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/criteria/category/create", CreateCategoryHandler).Methods("POST")
-	//r.Handle("/criteria/service/create", CreateCriteriaHandler).Methods("POST")
-	//r.Handle("/criteria/service/update", UpdateCriteriaHandler).Methods("POST")
-	//r.Handle("/criteria/category/update", UpdateCategoryHandler).Methods("POST")
-	//
-	//r.Handle("/criteria/category/get-list", GetListCategoryHandler).Methods("GET")
-	//r.Handle("/criteria/service/get-list", GetListCriteriaHandler).Methods("GET")
-	//r.Handle("/criteria/category/get", GetCategoryHandler).Methods("GET")
-	//r.Handle("/criteria/service/get", GetCriteriaHandler).Methods("GET")
+	r.Handle("/criteria/category/create-or-update", CreateOrUpdateCategoryHandler).Methods("POST")
+	r.Handle("/criteria/service/create-or-update", CreateOrUpdateCriteriaHandler).Methods("POST")
+
+	r.Handle("/criteria/category/get-list", GetListCategoryHandler).Methods("GET")
+	r.Handle("/criteria/service/get-list", GetListCriteriaHandler).Methods("GET")
+	r.Handle("/criteria/category/get", GetCategoryHandler).Methods("GET")
+	r.Handle("/criteria/service/get", GetCriteriaHandler).Methods("GET")
+	r.Handle("/criteria/category/delete", DeleteCategoryHandler).Methods("DELETE")
+	r.Handle("/criteria/service/delete", DeleteCriteriaHandler).Methods("DELETE")
 
 	logger.Log("msg", "HTTP", "addr", ":8006")
 	logger.Log("err", http.ListenAndServe(":8006", nil))

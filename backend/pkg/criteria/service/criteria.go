@@ -3,6 +3,7 @@ package service
 import (
 	"DoAn/entity"
 	"DoAn/pkg/criteria"
+	"DoAn/pkg/criteria/api"
 	"context"
 	"github.com/go-kit/kit/log"
 )
@@ -29,12 +30,7 @@ func (c CriteriaStruct) GetListCriteria(ctx context.Context) (interface{}, error
 	panic("implement me")
 }
 
-func (c CriteriaStruct) CreateCriteria(ctx context.Context, criteria entity.Criteria) (interface{}, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c CriteriaStruct) UpdateCriteria(ctx context.Context, criteria entity.Criteria) (interface{}, error) {
+func (c CriteriaStruct) CreateOrUpdateCriteria(ctx context.Context, criteria entity.Criteria) (interface{}, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -59,12 +55,7 @@ func (c CriteriaStruct) GetListCategory(ctx context.Context) (interface{}, error
 	panic("implement me")
 }
 
-func (c CriteriaStruct) CreateCategory(ctx context.Context, category string) (interface{}, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c CriteriaStruct) UpdateCategory(ctx context.Context, category entity.Category) (interface{}, error) {
+func (c CriteriaStruct) CreateOrUpdateCategory(ctx context.Context, category api.CreateOrUpdateCategory) (interface{}, error) {
 	//TODO implement me
 	panic("implement me")
 }

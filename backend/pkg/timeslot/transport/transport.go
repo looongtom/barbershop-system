@@ -110,15 +110,6 @@ func DecodeCreateListTimeSlotRequest(_ context.Context, r *http.Request) (interf
 	return request, nil
 }
 
-func DecodeUpdatedTimeSlotRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var request api.CreateOrUpdateTimeslotRequest
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		return nil, err
-	}
-	return request, nil
-}
-
 func DecodeGetTimeSlotRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var request api.FindTimeslotRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
