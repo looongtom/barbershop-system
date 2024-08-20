@@ -26,9 +26,7 @@ type (
 func MakeCreatePreviewImageEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.CreatePreviewImageRequest)
-		resp, err := svc.CreatePreviewImage(ctx, api.CreatePreviewImageRequest{
-			Url:       req.Url,
-			AccountId: req.AccountId})
+		resp, err := svc.CreatePreviewImage(ctx, req)
 		return Response{
 			Message: "success",
 			Data:    resp,

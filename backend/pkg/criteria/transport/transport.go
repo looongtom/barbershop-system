@@ -1,15 +1,14 @@
 package transport
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/criteria"
 	"DoAn/pkg/criteria/api"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/go-kit/kit/endpoint"
 	"net/http"
+	"strconv"
 )
 
 type (
@@ -51,11 +50,7 @@ func MakeCreateCategoryEndpoints(svc criteria.CriteriaService) endpoint.Endpoint
 func MakeCreateOrUpdateCriteriaEndpoints(svc criteria.CriteriaService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.CreateOrUpdateCriteria)
-		resp, err := svc.CreateOrUpdateCriteria(ctx, entity.Criteria{
-			Name:       req.Name,
-			Img:        req.Img,
-			CetegoryId: req.CategoryId,
-		})
+		resp, err := svc.CreateOrUpdateCriteria(ctx, req)
 		return Response{
 			Message: "success",
 			Data:    resp,
@@ -143,20 +138,30 @@ func DecodeCreateOrUpdateCategoryRequest(_ context.Context, r *http.Request) (in
 
 func DecodeCreateOrUpdateCriteriaRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var request api.CreateOrUpdateCriteria
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	r.ParseMultipartForm(10 << 20)
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
 		return nil, err
 	}
-	if &request.ID == nil {
-		if request.Name == "" || &request.Name == nil {
-			return nil, errors.New("missing name")
-		}
-		if request.Img == "" || &request.Img == nil {
-			return nil, errors.New("missing img")
-		}
-		if &request.CategoryId == nil {
-			return nil, errors.New("missing category id")
-		}
+	defer file.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+	fmt.Printf("File Size: %+v\n", handler.Size)
+	fmt.Printf("MIME Header: %+v\n", handler.Header)
+	request.Img = file
+	categoryIdValue, ok := strconv.Atoi(r.FormValue("category_id"))
+	if ok != nil {
+		fmt.Println("Error Retrieving category_id")
+		return nil, ok
 	}
+	r.FormValue("name")
+	id, ok := strconv.Atoi(r.FormValue("id"))
+	if ok != nil {
+		fmt.Println("Error Retrieving id")
+		return nil, ok
+	}
+	request.CategoryId = categoryIdValue
+	request.ID = id
 	return request, nil
 }
 

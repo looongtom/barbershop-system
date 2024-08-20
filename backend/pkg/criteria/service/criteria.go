@@ -1,7 +1,6 @@
 package service
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/criteria"
 	"DoAn/pkg/criteria/api"
 	"context"
@@ -30,9 +29,13 @@ func (c CriteriaStruct) GetListCriteria(ctx context.Context) (interface{}, error
 	panic("implement me")
 }
 
-func (c CriteriaStruct) CreateOrUpdateCriteria(ctx context.Context, criteria entity.Criteria) (interface{}, error) {
-	//TODO implement me
-	panic("implement me")
+func (c CriteriaStruct) CreateOrUpdateCriteria(ctx context.Context, criteria api.CreateOrUpdateCriteria) (interface{}, error) {
+	//ts := time.Now()
+	//urlImage, err := common.UploadImageToCloud(criteria.Img)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return nil, nil
 }
 
 func (c CriteriaStruct) DeleteCriteria(ctx context.Context, id string) (interface{}, error) {
