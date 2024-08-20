@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/endpoint"
 	"net/http"
+	"strconv"
 )
 
 type (
@@ -71,6 +72,13 @@ func DecodeCreatePreviewImageRequest(_ context.Context, r *http.Request) (interf
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	req.Url = file
+	accountStr := r.FormValue("account_id")
+	accountValue, ok := strconv.Atoi(accountStr)
+	if ok != nil {
+		fmt.Println("Error Retrieving account_id")
+		return nil, ok
+	}
+	req.AccountId = accountValue
 	return req, err
 }
 

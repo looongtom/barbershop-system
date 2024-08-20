@@ -2,21 +2,37 @@ package service
 
 import (
 	"DoAn/entity"
+	"DoAn/pkg/account/pb"
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/api"
 	"DoAn/pkg/previewimage/common"
 	"context"
+	"errors"
+	"fmt"
+	"google.golang.org/grpc"
 	"time"
 
 	"github.com/go-kit/kit/log"
 )
 
 type PreviewImageService struct {
-	repository previewimage.PreviewImageRepository
-	logger     log.Logger
+	repository  previewimage.PreviewImageRepository
+	connAccount *grpc.ClientConn
+	logger      log.Logger
 }
 
 func (p PreviewImageService) CreatePreviewImage(ctx context.Context, request api.CreatePreviewImageRequest) (interface{}, error) {
+	//call grpc api
+	clientAccount := pb.NewUserServiceClient(p.connAccount)
+	checkBarber, err := clientAccount.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(request.AccountId)})
+	if err != nil {
+		fmt.Printf("error when checking account: %v", err)
+		return nil, err
+	}
+	if checkBarber == nil {
+		return nil, errors.New("account does not exist")
+	}
+
 	ts := time.Now()
 	urlImage, err := common.UploadImageToCloud(request.Url)
 	if err != nil {
@@ -49,9 +65,11 @@ func (p PreviewImageService) GetListPreviewImageByAccountId(ctx context.Context,
 	return resp, nil
 }
 
-func NewService(repo previewimage.PreviewImageRepository, logger log.Logger) previewimage.PreviewImageService {
+func NewService(repo previewimage.PreviewImageRepository, logger log.Logger,
+	conn *grpc.ClientConn) previewimage.PreviewImageService {
 	return &PreviewImageService{
-		repository: repo,
-		logger:     logger,
+		repository:  repo,
+		logger:      logger,
+		connAccount: conn,
 	}
 }

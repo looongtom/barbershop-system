@@ -6,9 +6,11 @@ import (
 	repository "DoAn/pkg/previewimage/db"
 	"DoAn/pkg/previewimage/service"
 	"DoAn/pkg/previewimage/transport"
+	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 	logV "log"
 	"net/http"
 	"os"
@@ -39,7 +41,15 @@ func main() {
 		if err != nil {
 			logV.Fatalf("Error loading repository, %v", err)
 		}
-		svc = service.NewService(repo, logger)
+
+		connGrpcAccount, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		if err != nil {
+			fmt.Printf("did not connect: %v", err)
+			logV.Fatalf("Error getting env, %v", err)
+		}
+		defer connGrpcAccount.Close()
+
+		svc = service.NewService(repo, logger, connGrpcAccount)
 	}
 
 	CreatePreviewImageHandler := httptransport.NewServer(

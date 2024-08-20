@@ -56,10 +56,6 @@ func main() {
 			logV.Fatalf("Error getting env, %v", err)
 		}
 		defer connGrpcAccount.Close()
-		if err != nil {
-			fmt.Printf("Error getting env, %v", err)
-			logV.Fatalf("Error getting env, %v", err)
-		}
 
 		connGrpcTimeslot, err := grpc.Dial(os.Getenv("GRPC_TIMESLOT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
@@ -67,10 +63,6 @@ func main() {
 			logV.Fatalf("Error getting env, %v", err)
 		}
 		defer connGrpcTimeslot.Close()
-		if err != nil {
-			fmt.Printf("Error getting env, %v", err)
-			logV.Fatalf("Error getting env, %v", err)
-		}
 
 		connGrpcService, err := grpc.Dial(os.Getenv("GRPC_SERVICE_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
@@ -78,10 +70,7 @@ func main() {
 			logV.Fatalf("Error getting env, %v", err)
 		}
 		defer connGrpcService.Close()
-		if err != nil {
-			fmt.Printf("Error getting env, %v", err)
-			logV.Fatalf("Error getting env, %v", err)
-		}
+
 		kafkaBroker, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
 		if err != nil {
 			fmt.Printf("Failed to create producer: %s\n", err)
