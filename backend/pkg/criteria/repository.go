@@ -7,7 +7,7 @@ import (
 
 type CriteriaRepository interface {
 	CreateCategory(ctx context.Context, category string) (*entity.Category, error)
-	CreateCriteria(ctx context.Context, criteria entity.Criteria) error
+	CreateCriteria(ctx context.Context, criteria entity.Criteria) (*entity.Criteria, error)
 	UpdateCriteria(ctx context.Context, criteria entity.Criteria) (*entity.Criteria, error)
 	UpdateCategory(ctx context.Context, category entity.Category) (*entity.Category, error)
 

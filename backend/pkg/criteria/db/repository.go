@@ -25,7 +25,7 @@ func (r repo) CreateCategory(ctx context.Context, category string) (*entity.Cate
 	panic("implement me")
 }
 
-func (r repo) CreateCriteria(ctx context.Context, criteria entity.Criteria) error {
+func (r repo) CreateCriteria(ctx context.Context, criteria entity.Criteria) (*entity.Criteria, error) {
 	//TODO implement me
 	panic("implement me")
 }
