@@ -16,6 +16,12 @@ func CreateTable(db sql.DB) (err error) {
     			created_at BIGINT NOT NULL,
     			updated_at BIGINT NOT NULL);
 `,
+		`CREATE TABLE IF NOT EXISTS category(
+    			id SERIAL PRIMARY KEY,
+    			name VARCHAR(255) NOT NULL,
+    			created_at BIGINT NOT NULL,
+    			updated_at BIGINT NOT NULL);
+	`,
 	}
 	for _, query := range tableQueries {
 		_, err := db.Exec(query)

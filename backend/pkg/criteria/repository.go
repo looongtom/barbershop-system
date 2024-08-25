@@ -12,7 +12,9 @@ type CriteriaRepository interface {
 	UpdateCategory(ctx context.Context, category entity.Category) (*entity.Category, error)
 
 	GetCriteria(ctx context.Context, id string) (*entity.Criteria, error)
-	GetCategory(ctx context.Context, id string) (*entity.Criteria, error)
+	GetCategory(ctx context.Context, id string) (*entity.Category, error)
 	GetListCategory(ctx context.Context) ([]entity.Category, error)
 	GetListCriteria(ctx context.Context) ([]entity.Criteria, error)
+
+	FindCriteria(ctx context.Context, name string, category int) ([]entity.Criteria, error)
 }

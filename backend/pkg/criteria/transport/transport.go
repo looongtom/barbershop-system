@@ -154,14 +154,17 @@ func DecodeCreateOrUpdateCriteriaRequest(_ context.Context, r *http.Request) (in
 		fmt.Println("Error Retrieving category_id")
 		return nil, ok
 	}
-	r.FormValue("name")
-	id, ok := strconv.Atoi(r.FormValue("id"))
-	if ok != nil {
-		fmt.Println("Error Retrieving id")
-		return nil, ok
+	idValue := r.FormValue("id")
+	if idValue != "" && &idValue != nil {
+		id, ok := strconv.Atoi(idValue)
+		if ok != nil {
+			fmt.Println("Error Retrieving id")
+			return nil, ok
+		}
+		request.ID = id
 	}
+	request.Name = r.FormValue("name")
 	request.CategoryId = categoryIdValue
-	request.ID = id
 	return request, nil
 }
 

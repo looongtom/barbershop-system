@@ -10,7 +10,7 @@ type CriteriaService interface {
 	GetListCriteria(ctx context.Context) (interface{}, error)
 	CreateOrUpdateCriteria(ctx context.Context, criteria api.CreateOrUpdateCriteria) (interface{}, error)
 	DeleteCriteria(ctx context.Context, id string) (interface{}, error)
-	GetListCriteriaByCategory(ctx context.Context, categoryId int) (interface{}, error)
+	FindCriteria(ctx context.Context, findCriteriaReq api.FindCriteria) (interface{}, error)
 
 	GetCategory(ctx context.Context, id string) (interface{}, error)
 	GetListCategory(ctx context.Context) (interface{}, error)
