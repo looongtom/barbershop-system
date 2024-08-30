@@ -34,6 +34,17 @@ func MakeCreatePreviewImageEndpoints(svc previewimage.PreviewImageService) endpo
 	}
 }
 
+func MakeUploadImagesEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.UpdateImageRequest)
+		resp, err := svc.UploadImages(ctx, req)
+		return Response{
+			Message: "success",
+			Data:    resp,
+		}, err
+	}
+}
+
 func MakeGetPreviewImageEndpoints(svc service.PreviewImageService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(GetPreviewImageRequest)
@@ -56,6 +67,53 @@ func MakeGetListPreviewImageByAccountIdEndpoints(svc service.PreviewImageService
 	}
 }
 
+func DecodeUploadImagesRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req api.UpdateImageRequest
+	r.ParseMultipartForm(10 << 20)
+
+	selfImg, handler1, err := r.FormFile("self_img")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		return nil, err
+	}
+	defer selfImg.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler1.Filename)
+	fmt.Printf("File Size: %+v\n", handler1.Size)
+	fmt.Printf("MIME Header: %+v\n", handler1.Header)
+
+	shapeImg, handler2, err := r.FormFile("shape_img")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		return nil, err
+	}
+	defer selfImg.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler2.Filename)
+	fmt.Printf("File Size: %+v\n", handler2.Size)
+	fmt.Printf("MIME Header: %+v\n", handler2.Header)
+
+	colorImg, handler3, err := r.FormFile("color_img")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		return nil, err
+	}
+	defer selfImg.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler3.Filename)
+	fmt.Printf("File Size: %+v\n", handler3.Size)
+	fmt.Printf("MIME Header: %+v\n", handler3.Header)
+
+	req.SelfImg = selfImg
+	req.ShapeImg = shapeImg
+	req.ColorImg = colorImg
+
+	accountStr := r.FormValue("account_id")
+	accountValue, ok := strconv.Atoi(accountStr)
+	if ok != nil {
+		fmt.Println("Error Retrieving account_id")
+		return nil, ok
+	}
+	req.AccountId = accountValue
+	return req, err
+}
 func DecodeCreatePreviewImageRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req api.CreatePreviewImageRequest
 	r.ParseMultipartForm(10 << 20)

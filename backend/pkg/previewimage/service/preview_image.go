@@ -21,6 +21,41 @@ type PreviewImageService struct {
 	logger      log.Logger
 }
 
+func (p PreviewImageService) UploadImages(ctx context.Context, request api.UpdateImageRequest) (interface{}, error) {
+	clientAccount := pb.NewUserServiceClient(p.connAccount)
+	checkBarber, err := clientAccount.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(request.AccountId)})
+	if err != nil {
+		fmt.Printf("error when checking account: %v", err)
+		return nil, err
+	}
+	if checkBarber == nil {
+		return nil, errors.New("account does not exist")
+	}
+
+	//ts := time.Now()
+	SelfImg, err := common.UploadImageToCloud(request.SelfImg)
+	if err != nil {
+		return nil, err
+	}
+	ShapeImg, err := common.UploadImageToCloud(request.ShapeImg)
+	if err != nil {
+		return nil, err
+	}
+	ColorImg, err := common.UploadImageToCloud(request.ColorImg)
+	if err != nil {
+		return nil, err
+	}
+
+	return struct {
+		SelfImg  string `json:"self_img"`
+		ShapeImg string `json:"shape_img"`
+		ColorImg string `json:"color_img"`
+	}{
+		SelfImg:  SelfImg,
+		ShapeImg: ShapeImg,
+		ColorImg: ColorImg,
+	}, nil
+}
 func (p PreviewImageService) CreatePreviewImage(ctx context.Context, request api.CreatePreviewImageRequest) (interface{}, error) {
 	//call grpc api
 	clientAccount := pb.NewUserServiceClient(p.connAccount)

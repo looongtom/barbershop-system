@@ -58,9 +58,16 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	UploadImagesHandler := httptransport.NewServer(
+		transport.MakeUploadImagesEndpoints(svc),
+		transport.DecodeUploadImagesRequest,
+		transport.EncodeResponse,
+	)
+
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/previewimage/create", CreatePreviewImageHandler).Methods("POST")
+	r.Handle("/previewimage/upload", UploadImagesHandler).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8005")
 	logger.Log("err", http.ListenAndServe(":8005", nil))
