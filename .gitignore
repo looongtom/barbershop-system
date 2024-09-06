@@ -1,6 +1,6 @@
 # .gitignore
 
-# Ignore .env files
+# Ignore account.env files
 .env
 
 # Ignore .idea folder

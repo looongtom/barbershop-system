@@ -1,10 +1,8 @@
 package db
 
 import (
-	"DoAn/database"
-	"DoAn/entity"
 	"DoAn/pkg/account"
-	"DoAn/pkg/account/auth"
+	"DoAn/pkg/account/entity"
 	"context"
 	"database/sql"
 	"errors"
@@ -12,14 +10,14 @@ import (
 	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"os"
 	"time"
 )
 
 type repo struct {
-	collection *mongo.Collection
-	db         *sql.DB
-	logger     log.Logger
+	collection         *mongo.Collection
+	blkTokenCollection *mongo.Collection
+	db                 *sql.DB
+	logger             log.Logger
 }
 
 func (r repo) ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error) {
@@ -42,43 +40,44 @@ func (r repo) ChangePassFirstTime(ctx context.Context, username, password string
 	return "success", nil
 }
 
-func (r repo) Login(ctx context.Context, user entity.Account) (*string, *string, error) {
+func (r repo) Login(ctx context.Context, user entity.Account) (bool, error) {
 	username := entity.Santize(user.Username)
 	password := entity.Santize(user.Password)
 	var result entity.Account
 	err := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 	if err != nil {
-		return nil, nil, errors.New("username not found")
+		return false, errors.New("username not found")
 	}
 
 	hashedPassword := fmt.Sprintf("%v", result.Password)
 	err = entity.CheckPasswordHash(hashedPassword, password)
 
 	if err != nil {
-		return nil, nil, errors.New("username or password incorrect")
-	}
-	token, errCreate := auth.CreateAccessToken(user.Username)
-	if errCreate != nil {
-		return nil, nil, errCreate
+		return false, errors.New("username or password incorrect")
 	}
 
-	newToken := bson.M{"token": token, "account": user.Username, "created_at": time.Now()}
-	_, errs := r.collection.InsertOne(context.TODO(), newToken)
-	if errs != nil {
-		return nil, nil, errs
-	}
+	//token, errCreate := auth.CreateAccessToken(user.Username)
+	//if errCreate != nil {
+	//	return false, errCreate
+	//}
+	//
+	//newToken := bson.M{"token": token, "account": user.Username, "created_at": time.Now()}
+	//_, errs := r.collection.InsertOne(context.TODO(), newToken)
+	//if errs != nil {
+	//	return nil, nil, errs
+	//}
+	//
+	//refreshToken, errCreate := auth.CreateRefreshToken(user.Username)
+	//if errCreate != nil {
+	//	return nil, nil, errCreate
+	//}
+	//newRefreshToken := bson.M{"refresh_token": refreshToken, "account": user.Username, "created_at": time.Now()}
+	//_, errs = r.collection.InsertOne(context.TODO(), newRefreshToken)
+	//if errs != nil {
+	//	return nil, nil, errs
+	//}
 
-	refreshToken, errCreate := auth.CreateRefreshToken(user.Username)
-	if errCreate != nil {
-		return nil, nil, errCreate
-	}
-	newRefreshToken := bson.M{"refresh_token": refreshToken, "account": user.Username, "created_at": time.Now()}
-	_, errs = r.collection.InsertOne(context.TODO(), newRefreshToken)
-	if errs != nil {
-		return nil, nil, errs
-	}
-
-	return &token, &refreshToken, nil
+	return true, nil
 }
 
 func (r repo) Register(ctx context.Context, user entity.Account) error {
@@ -137,23 +136,23 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
 	return nil
 }
 
-func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, error) {
-	var result entity.Account
-	err := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
-	if err != nil {
-		return nil, errors.New("username not found")
-	}
-	refreshToken, errCreate := auth.CreateRefreshToken(username)
-	if errCreate != nil {
-		return nil, errCreate
-	}
-	newRefreshToken := bson.M{"refresh_token": refreshToken, "account": username, "created_at": time.Now()}
-	_, errs := r.collection.InsertOne(context.TODO(), newRefreshToken)
-	if errs != nil {
-		return nil, errs
-	}
-	return refreshToken, nil
-}
+//func (r repo) RefreshToken(ctx context.Context, username string) (interface{}, error) {
+//	var result entity.Account
+//	err := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
+//	if err != nil {
+//		return nil, errors.New("username not found")
+//	}
+//	refreshToken, errCreate := auth.CreateRefreshToken(username)
+//	if errCreate != nil {
+//		return nil, errCreate
+//	}
+//	newRefreshToken := bson.M{"refresh_token": refreshToken, "account": username, "created_at": time.Now()}
+//	_, errs := r.collection.InsertOne(context.TODO(), newRefreshToken)
+//	if errs != nil {
+//		return nil, errs
+//	}
+//	return refreshToken, nil
+//}
 
 func (r repo) CheckExistedBarber(ctx context.Context, id int) (string, error) {
 	query := `
@@ -186,8 +185,7 @@ func (r repo) GetProfile(ctx context.Context, email string) (interface{}, error)
 }
 
 func (r repo) Logout(ctx context.Context, tokenString string) error {
-	collection := database.ConnectMongo(os.Getenv("TokenBlackListCollectionMongo"))
-	_, err := collection.InsertOne(context.TODO(), bson.M{
+	_, err := r.blkTokenCollection.InsertOne(context.TODO(), bson.M{
 		"token":          tokenString,
 		"blacklisted_at": time.Now(),
 	})
@@ -197,10 +195,11 @@ func (r repo) Logout(ctx context.Context, tokenString string) error {
 	return nil
 }
 
-func NewRepository(collection *mongo.Collection, collectionPostgres *sql.DB, logger log.Logger) (account.UserRepository, error) {
+func NewRepository(collection *mongo.Collection, blkListCollection *mongo.Collection, collectionPostgres *sql.DB, logger log.Logger) (account.UserRepository, error) {
 	return &repo{
-		collection: collection,
-		db:         collectionPostgres,
-		logger:     logger,
+		collection:         collection,
+		blkTokenCollection: blkListCollection,
+		db:                 collectionPostgres,
+		logger:             logger,
 	}, nil
 }

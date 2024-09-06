@@ -1,8 +1,8 @@
 package booking
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/booking/api"
+	"DoAn/pkg/booking/entity"
 	"context"
 )
 

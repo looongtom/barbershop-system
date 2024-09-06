@@ -15,7 +15,7 @@ import (
 )
 
 func UploadImageToCloud(file multipart.File) (string, error) {
-	er := godotenv.Load(".env")
+	er := godotenv.Load("account.env")
 	if er != nil {
 		logV.Fatalln("Error getting env, %v", er)
 	}

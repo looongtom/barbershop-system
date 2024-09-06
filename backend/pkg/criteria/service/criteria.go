@@ -1,10 +1,11 @@
 package service
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/criteria"
 	"DoAn/pkg/criteria/api"
 	"DoAn/pkg/criteria/common"
+	entity2 "DoAn/pkg/criteria/entity"
+	"DoAn/pkg/servicing/entity"
 	"context"
 	"database/sql"
 	"errors"
@@ -45,7 +46,7 @@ func (c CriteriaStruct) CreateOrUpdateCriteria(ctx context.Context, criteria api
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-		updatedCriteria := entity.Criteria{
+		updatedCriteria := entity2.Criteria{
 			ID:         criteria.ID,
 			Name:       criteria.Name,
 			CategoryId: criteria.CategoryId,
@@ -100,7 +101,7 @@ func (c CriteriaStruct) CreateOrUpdateCriteria(ctx context.Context, criteria api
 
 	categoryValue = checkCategory.ID
 
-	resp, err := c.repository.CreateCriteria(ctx, entity.Criteria{
+	resp, err := c.repository.CreateCriteria(ctx, entity2.Criteria{
 		Name:       criteria.Name,
 		Img:        urlImage,
 		CategoryId: categoryValue,

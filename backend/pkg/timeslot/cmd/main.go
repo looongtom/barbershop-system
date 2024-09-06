@@ -1,7 +1,7 @@
 package main
 
 import (
-	"DoAn/database"
+	"DoAn/pkg/timeslot/database"
 	"DoAn/pkg/timeslot/transport"
 
 	"DoAn/pkg/timeslot"
@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("timeslot.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

@@ -1,9 +1,13 @@
 package main
 
 import (
-	"DoAn/database"
 	"DoAn/pkg/account"
+	"DoAn/pkg/account/auth"
+	repository2 "DoAn/pkg/account/auth/repository"
+	service2 "DoAn/pkg/account/auth/service"
+	"DoAn/pkg/account/database"
 	repository "DoAn/pkg/account/db"
+	"DoAn/pkg/account/middleware"
 	"DoAn/pkg/account/service"
 	"DoAn/pkg/account/transport"
 	"github.com/joho/godotenv"
@@ -17,26 +21,40 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	//read the account.env file
+	err := godotenv.Load("account.env")
 	if err != nil {
-		logV.Fatalln("Error getting env, %v", err)
+		logV.Fatalf("Error loading account.env file: %v", err)
 	}
 	logger := log.NewLogfmtLogger(os.Stderr)
 	collectionMongo := database.ConnectMongo(os.Getenv("TokenCollectionMongo"))
+	collectionMongoBlkToken := database.ConnectMongo(os.Getenv("TokenBlackListCollectionMongo"))
 	collectionPostgres, err := database.ConnectPostgres()
+	collectionRedis := auth.ConnectRedis(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
+	secretKey := []byte(os.Getenv("SECRET_JWT"))
+
 	if err != nil {
 		logV.Fatalf("Error getting env, %v", err)
 	}
 	r := mux.NewRouter()
 
+	var authenSvc auth.AuthenService
+	authenSvc = service2.AuthServiceStruct{}
+	{
+		repo2 := repository2.NewTokenRepository(collectionRedis)
+		authenSvc = service2.NewAuthService(repo2, secretKey)
+	}
+
 	var svc account.UserService
 	svc = service.UserServiceStruct{}
 	{
-		repo, err := repository.NewRepository(collectionMongo, collectionPostgres, logger)
+		repo, err := repository.NewRepository(collectionMongo, collectionMongoBlkToken, collectionPostgres, logger)
 		if err != nil {
 			logV.Fatalf("Error getting env, %v", err)
 		}
-		svc = service.NewService(repo, logger)
+		repo2 := repository2.NewTokenRepository(collectionRedis)
+		authenSvc = service2.NewAuthService(repo2, secretKey)
+		svc = service.NewService(repo, authenSvc, logger)
 	}
 
 	RegisterUserHandler := httptransport.NewServer(
@@ -51,31 +69,31 @@ func main() {
 		transport.MakeGetProfileEndpoints(svc),
 		transport.DecodeGetProfileRequest,
 		transport.EncodeResponse)
-	ChangePassFirstTimeHandler := httptransport.NewServer(
-		transport.MakeChangePassFirstTimeEndpoints(svc),
-		transport.DecodeChangePassFirstTimeRequest,
-		transport.EncodeResponse)
+	//ChangePassFirstTimeHandler := httptransport.NewServer(
+	//	transport.MakeChangePassFirstTimeEndpoints(svc),
+	//	transport.DecodeChangePassFirstTimeRequest,
+	//	transport.EncodeResponse)
 	LogoutHandler := httptransport.NewServer(
-		transport.MakeLogoutEndpoints(svc),
-		transport.DecodeLogoutRequest,
+		transport.MakeLogoutEndpoints(authenSvc),
+		transport.DecodeEmptyRequest,
 		transport.EncodeResponse)
 	RefreshHandler := httptransport.NewServer(
-		transport.MakeRefreshEndpoints(svc),
-		transport.DecodeRefreshRequest,
+		transport.MakeRefreshEndpoints(authenSvc),
+		transport.DecodeEmptyRequest,
 		transport.EncodeResponse)
 
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/auth/register", RegisterUserHandler).Methods("POST")
 	r.Handle("/auth/login", LoginHandler).Methods("POST")
-	r.Handle("/auth/refresh", RefreshHandler).Methods("POST")
-	r.Handle("/auth/profile", GetProfileHandler).Methods("GET")
-	r.Handle("/auth/logout", LogoutHandler).Methods("POST")
-	r.Handle("/auth/change-pass-first-time", ChangePassFirstTimeHandler).Methods("POST")
-
-	r.Handle("/login-oauth", http.HandlerFunc(transport.HandleMain)).Methods("GET")
-	r.Handle("/login", http.HandlerFunc(transport.HandleGoogleLogin)).Methods("GET")
-	r.Handle("/callback", http.HandlerFunc(transport.HandleGoogleCallback)).Methods("GET")
+	r.Handle("/auth/refresh", middleware.JWTMiddlewareRefreshToken(RefreshHandler, authenSvc)).Methods("GET")
+	r.Handle("/auth/profile", middleware.JWTMiddleware(GetProfileHandler, authenSvc)).Methods("GET")
+	r.Handle("/auth/logout", middleware.JWTMiddleware(LogoutHandler, authenSvc)).Methods("POST")
+	//r.Handle("/auth/change-pass-first-time", ChangePassFirstTimeHandler).Methods("POST")
+	//
+	//r.Handle("/login-oauth", http.HandlerFunc(transport.HandleMain)).Methods("GET")
+	//r.Handle("/login", http.HandlerFunc(transport.HandleGoogleLogin)).Methods("GET")
+	//r.Handle("/callback", http.HandlerFunc(transport.HandleGoogleCallback)).Methods("GET")
 
 	logger.Log("msg", "HTTP", "addr", ":8000")
 	logger.Log("err", http.ListenAndServe(":8000", nil))

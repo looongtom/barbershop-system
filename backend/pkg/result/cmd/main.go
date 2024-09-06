@@ -1,8 +1,8 @@
 package main
 
 import (
-	"DoAn/database"
 	"DoAn/pkg/result"
+	"DoAn/pkg/result/database"
 	repository "DoAn/pkg/result/db"
 	"DoAn/pkg/result/service"
 	"DoAn/pkg/result/transport"
@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("result.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

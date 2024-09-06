@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/timeslot/endpoint"
+	"DoAn/pkg/timeslot/entity"
 	"DoAn/pkg/timeslot/pb"
 	"context"
 

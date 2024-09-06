@@ -1,8 +1,8 @@
 package main
 
 import (
-	"DoAn/database"
 	"DoAn/pkg/criteria"
+	"DoAn/pkg/criteria/database"
 	repository "DoAn/pkg/criteria/db"
 	"DoAn/pkg/criteria/service"
 	"DoAn/pkg/criteria/transport"
@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("criteria.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

@@ -52,7 +52,7 @@ func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, topic, uu
 
 func main() {
 
-	err := godotenv.Load(".env")
+	err := godotenv.Load("criteria.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

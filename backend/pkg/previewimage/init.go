@@ -11,7 +11,9 @@ func CreateTablePreviewImage(db sql.DB) (err error) {
 		`CREATE TABLE IF NOT EXISTS preview_image(
 			id SERIAL PRIMARY KEY,
 			account_id int NOT NULL,
-			image_url VARCHAR(255) NOT NULL,
+			self_img VARCHAR(255) NOT NULL,
+			shape_img VARCHAR(255) NOT NULL,
+			color_img VARCHAR(255) NOT NULL,
 			created_at BIGINT NOT NULL);
 `,
 		`CREATE TABLE IF NOT EXISTS preview_image_criteria(

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"DoAn/database"
 	"DoAn/pkg/booking"
+	"DoAn/pkg/booking/database"
 	repository "DoAn/pkg/booking/db"
 	"DoAn/pkg/booking/service"
 	"DoAn/pkg/booking/transport"
@@ -25,7 +25,7 @@ const (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("booking.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

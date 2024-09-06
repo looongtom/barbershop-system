@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/servicing"
+	"DoAn/pkg/servicing/entity"
 	"context"
 	"encoding/json"
 	"fmt"

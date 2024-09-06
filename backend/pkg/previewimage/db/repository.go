@@ -1,8 +1,8 @@
 package db
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/previewimage"
+	"DoAn/pkg/previewimage/entity"
 	"context"
 	"database/sql"
 	"github.com/go-kit/kit/log"
@@ -24,16 +24,6 @@ func (r repo) UploadImages(ctx context.Context, previewImage entity.PreviewImage
 	query := `INSERT INTO preview_image (account_id, self_img,shape_img,color_img, created_at) VALUES ($1, $2, $3,$4,$5) RETURNING id,account_id,self_img,shape_img,color_img, created_at`
 	var resp entity.PreviewImage
 	err := r.db.QueryRowContext(ctx, query, previewImage.AccountId, previewImage.Url, previewImage.CreatedAt).Scan(&resp.ID, &resp.AccountId, &resp.SelfImg, &resp.ShapeImg, &resp.ColorImg, &resp.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	return &resp, nil
-}
-func (r repo) CreatePreviewImage(ctx context.Context, previewImage entity.PreviewImage) (*entity.PreviewImage, error) {
-	query := `INSERT INTO preview_image (account_id, image_url, created_at) VALUES ($1, $2, $3) RETURNING id,account_id, image_url, created_at`
-
-	var resp entity.PreviewImage
-	err := r.db.QueryRowContext(ctx, query, previewImage.AccountId, previewImage.Url, previewImage.CreatedAt).Scan(&resp.ID, &resp.AccountId, &resp.Url, &resp.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

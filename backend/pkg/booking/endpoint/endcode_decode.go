@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/booking/api"
+	"DoAn/pkg/booking/entity"
 	"DoAn/pkg/booking/pb"
 	"context"
 )

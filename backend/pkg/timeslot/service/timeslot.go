@@ -1,9 +1,9 @@
 package service
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/timeslot"
 	"DoAn/pkg/timeslot/api"
+	"DoAn/pkg/timeslot/entity"
 	"context"
 	"database/sql"
 	"errors"

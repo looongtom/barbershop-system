@@ -1,8 +1,8 @@
 package service
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/servicing"
+	"DoAn/pkg/servicing/entity"
 	"context"
 	"errors"
 	"github.com/go-kit/kit/log"

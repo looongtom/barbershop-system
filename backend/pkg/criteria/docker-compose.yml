@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  criteria-service:
+    build: .
+    ports:
+      - "8006:8006"
+    depends_on:
+      - mongo
+      - postgres
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "2717:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=tom
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+      - MONGO_INITDB_DATABASE=user_management
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=tr1nhtu@n
+      - POSTGRES_DB=criteria_management
+
+  kong:
+    image: kong:latest
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8443:8443"
+      - "8444:8444"
+    environment:
+        - KONG_DATABASE=postgres
+        - KONG_PG_HOST=postgres
+        - KONG_PG_USER=postgres
+        - KONG_PG_PASSWORD=tr1nhtu@n
+        - KONG_PG_DATABASE=kong
+    depends_on:
+        - postgres
+        - criteria-service
+    volumes:
+      - kong_data:/var/lib/kong
+
+volumes:
+  mongo_data:
+  postgres_data:
+  kong_data:
+
+networks:
+    default:
+        external:
+          name: kong-net

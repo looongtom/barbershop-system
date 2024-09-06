@@ -1,7 +1,7 @@
 package account
 
 import (
-	"DoAn/entity"
+	"DoAn/pkg/account/entity"
 	"context"
 )
 
@@ -12,7 +12,7 @@ type UserService interface {
 	GetProfile(ctx context.Context, email string) (interface{}, error)
 	Logout(ctx context.Context, token string) (string, error)
 	ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error)
-	RefreshToken(ctx context.Context, username string) (interface{}, error)
+	//RefreshToken(ctx context.Context, username string) (interface{}, error)
 
 	CheckExistedBarber(ctx context.Context, id int) (interface{}, error)
 }

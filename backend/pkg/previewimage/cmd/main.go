@@ -1,8 +1,8 @@
 package main
 
 import (
-	"DoAn/database"
 	"DoAn/pkg/previewimage"
+	"DoAn/pkg/previewimage/database"
 	repository "DoAn/pkg/previewimage/db"
 	"DoAn/pkg/previewimage/service"
 	"DoAn/pkg/previewimage/transport"
@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("previewimage.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

@@ -1,11 +1,11 @@
 package service
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/account/pb"
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/api"
 	"DoAn/pkg/previewimage/common"
+	"DoAn/pkg/previewimage/entity"
 	"context"
 	"errors"
 	"fmt"
@@ -73,7 +73,7 @@ func (p PreviewImageService) CreatePreviewImage(ctx context.Context, request api
 	if err != nil {
 		return nil, err
 	}
-	resp, err := p.repository.CreatePreviewImage(ctx, entity.PreviewImage{
+	resp, err := p.repository.UploadImages(ctx, entity.PreviewImage{
 		Url:       urlImage,
 		CreatedAt: ts.Unix(),
 		AccountId: request.AccountId,

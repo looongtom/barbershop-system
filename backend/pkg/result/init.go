@@ -21,9 +21,9 @@ func CreateTable(db sql.DB) (err error) {
     			id SERIAL PRIMARY KEY,
     			url VARCHAR(255) NOT NULL,
     			result_id int NOT NULL,
-    			created_at BIGINT NOT NULL)
-			FOREIGN KEY (result_id) REFERENCES result(id) ON DELETE CASCADE
-;
+    			created_at BIGINT NOT NULL,
+    			FOREIGN KEY (result_id) REFERENCES result(id) ON DELETE CASCADE
+    );
 `,
 	}
 

@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/timeslot/api"
+	"DoAn/pkg/timeslot/entity"
 	"DoAn/pkg/timeslot/pb"
 	"context"
 )

@@ -1,9 +1,9 @@
 package db
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/booking"
 	"DoAn/pkg/booking/api"
+	"DoAn/pkg/booking/entity"
 	"context"
 	"database/sql"
 	"github.com/go-kit/kit/log"

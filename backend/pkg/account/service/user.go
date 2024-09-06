@@ -1,14 +1,18 @@
 package service
 
 import (
-	"DoAn/entity"
 	"DoAn/pkg/account"
+	"DoAn/pkg/account/auth"
+	"DoAn/pkg/account/entity"
 	"context"
+	"errors"
+	"fmt"
 	"github.com/go-kit/kit/log"
 )
 
 type UserServiceStruct struct {
 	repository account.UserRepository
+	authenSvc  auth.AuthenService
 	logger     log.Logger
 }
 
@@ -21,11 +25,25 @@ func (u UserServiceStruct) ChangePassFirstTime(ctx context.Context, username, pa
 }
 
 func (u UserServiceStruct) Login(ctx context.Context, user entity.Account) (*string, *string, error) {
-	accessToken, refreshToken, err := u.repository.Login(ctx, user)
+	loginSuccess, err := u.repository.Login(ctx, user)
 	if err != nil {
 		return nil, nil, err
 	}
-	return accessToken, refreshToken, nil
+	if !loginSuccess {
+		return nil, nil, errors.New("username or password incorrect")
+	}
+	accessToken, err := u.authenSvc.CreateAccessToken(ctx, user.Username)
+	if err != nil {
+		fmt.Printf("error while creating access token: %v", err)
+		return nil, nil, err
+	}
+	refreshToken, _, err := u.authenSvc.CreateRefreshToken(ctx, user.Username, "")
+	if err != nil {
+		fmt.Printf("error while creating refresh token: %v", err)
+		return nil, nil, err
+	}
+
+	return &accessToken, &refreshToken, nil
 }
 
 func (u UserServiceStruct) Register(ctx context.Context, user entity.Account) (string, error) {
@@ -54,13 +72,13 @@ func (u UserServiceStruct) CheckExistedBarber(ctx context.Context, id int) (inte
 	return data, nil
 }
 
-func (u UserServiceStruct) RefreshToken(ctx context.Context, username string) (interface{}, error) {
-	data, err := u.repository.RefreshToken(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
+//func (u UserServiceStruct) RefreshToken(ctx context.Context, username string) (interface{}, error) {
+//	data, err := u.repository.RefreshToken(ctx, username)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return data, nil
+//}
 
 func (u UserServiceStruct) Logout(ctx context.Context, token string) (string, error) {
 	var msg = "success"
@@ -71,9 +89,10 @@ func (u UserServiceStruct) Logout(ctx context.Context, token string) (string, er
 	return msg, nil
 }
 
-func NewService(rep account.UserRepository, logger log.Logger) account.UserService {
+func NewService(rep account.UserRepository, svc auth.AuthenService, logger log.Logger) account.UserService {
 	return &UserServiceStruct{
 		repository: rep,
 		logger:     logger,
+		authenSvc:  svc,
 	}
 }

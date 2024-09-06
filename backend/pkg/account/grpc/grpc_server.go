@@ -1,8 +1,8 @@
 package main
 
 import (
-	"DoAn/database"
 	"DoAn/pkg/account"
+	"DoAn/pkg/account/database"
 	repository "DoAn/pkg/account/db"
 	"DoAn/pkg/account/endpoint"
 	"DoAn/pkg/account/pb"
@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("account.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}
@@ -36,11 +36,11 @@ func main() {
 	var svc account.UserService
 	svc = service.UserServiceStruct{}
 	{
-		repo, err := repository.NewRepository(collectionMongo, collectionPostgres, logger)
+		repo, err := repository.NewRepository(collectionMongo, nil, collectionPostgres, logger)
 		if err != nil {
 			logV.Fatalf("Error getting env, %v", err)
 		}
-		svc = service.NewService(repo, logger)
+		svc = service.NewService(repo, nil, logger)
 	}
 	errors := make(chan error)
 	go func() {
