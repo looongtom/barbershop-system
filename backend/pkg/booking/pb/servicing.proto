@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+message Servicing {
+    int32 id = 1;
+    string name = 2;
+    int32 price = 3;
+    string description = 4;
+    string url = 5;
+    int32 category_id = 6;
+
+    int64 created_at = 7;
+    int64 updated_at = 8;
+}
+
+message GetServiceByIdRequest {
+    int32 id = 1;
+}
+
+message ServicingList{
+    repeated Servicing servicings = 1;
+
+}
+
+service ServicingService {
+    rpc GetServiceById(GetServiceByIdRequest) returns (Servicing){};
+}

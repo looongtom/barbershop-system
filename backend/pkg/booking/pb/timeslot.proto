@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+
+
+message Timeslot{
+  int32 id=1;
+  string start_time=2;
+  string booked_date=3;
+  string status=4;
+  int32 barber_id=5;
+  int64 created_at=6;
+  int64 updated_at=7;
+}
+
+message TimeslotList{
+  repeated Timeslot timeslots=1;
+}
+
+message UpdateStatusTimeslotRequest{
+  int32 id=1;
+  string status=2;
+}
+
+message FindTimeslotRequest{
+  string start_time=1;
+  string booked_date=2;
+  string status=3;
+  int32 barber_id=4;
+}
+
+message CheckAvailableTimeslotRequest{
+  int32 id=1;
+}
+
+service TimeslotService{
+  rpc FindExistTimeslot(FindTimeslotRequest) returns (TimeslotList) {};
+  rpc CheckAvailableTimeslot(CheckAvailableTimeslotRequest) returns (Timeslot) {};
+  rpc UpdateStatusTimeslot(UpdateStatusTimeslotRequest) returns (Timeslot) {};
+}
