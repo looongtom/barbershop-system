@@ -40,20 +40,20 @@ func (r repo) ChangePassFirstTime(ctx context.Context, username, password string
 	return "success", nil
 }
 
-func (r repo) Login(ctx context.Context, user entity.Account) (bool, error) {
+func (r repo) Login(ctx context.Context, user entity.Account) (*int, error) {
 	username := entity.Santize(user.Username)
 	password := entity.Santize(user.Password)
 	var result entity.Account
 	err := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 	if err != nil {
-		return false, errors.New("username not found")
+		return nil, errors.New("username not found")
 	}
 
 	hashedPassword := fmt.Sprintf("%v", result.Password)
 	err = entity.CheckPasswordHash(hashedPassword, password)
 
 	if err != nil {
-		return false, errors.New("username or password incorrect")
+		return nil, errors.New("username or password incorrect")
 	}
 
 	//token, errCreate := auth.CreateAccessToken(user.Username)
@@ -77,7 +77,7 @@ func (r repo) Login(ctx context.Context, user entity.Account) (bool, error) {
 	//	return nil, nil, errs
 	//}
 
-	return true, nil
+	return &result.ID, nil
 }
 
 func (r repo) Register(ctx context.Context, user entity.Account) error {
@@ -158,10 +158,10 @@ func (r repo) CheckExistedBarber(ctx context.Context, id int) (string, error) {
 	query := `
 	SELECT id,role from account where id = $1 ;
 `
-	var checkedId, checkedRole int
+	checkedId, checkedRole := -1, -1
 	err := r.db.QueryRow(query, id).Scan(&checkedId, &checkedRole)
 	roleName := "UNKNOWN"
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return roleName, err
 	}
 	switch checkedRole {
@@ -171,6 +171,8 @@ func (r repo) CheckExistedBarber(ctx context.Context, id int) (string, error) {
 		roleName = "USER"
 	case entity.RoleAdmin:
 		roleName = "ADMIN"
+	default:
+		roleName = "UNKNOWN"
 	}
 	return roleName, nil
 }

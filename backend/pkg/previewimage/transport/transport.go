@@ -3,6 +3,7 @@ package transport
 import (
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/api"
+	"DoAn/pkg/previewimage/middleware"
 	"DoAn/pkg/previewimage/service"
 	"context"
 	"encoding/json"
@@ -104,6 +105,9 @@ func DecodeUploadImagesRequest(_ context.Context, r *http.Request) (interface{},
 	req.SelfImg = selfImg
 	req.ShapeImg = shapeImg
 	req.ColorImg = colorImg
+
+	userId := middleware.GetSessionHandler(r)
+	fmt.Printf("userId: %v\n", userId)
 
 	accountStr := r.FormValue("account_id")
 	accountValue, ok := strconv.Atoi(accountStr)

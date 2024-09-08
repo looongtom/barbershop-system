@@ -1,54 +1,52 @@
 package middleware
 
 import (
-	"DoAn/pkg/account/auth"
+	"DoAn/pkg/previewimage/common"
+	"DoAn/pkg/previewimage/pb"
 	"context"
 	"fmt"
 	"github.com/gorilla/sessions"
+	"google.golang.org/grpc"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 var store = sessions.NewCookieStore([]byte("something-very-secret"))
 
-func JWTMiddleware(next http.Handler, svc auth.AuthenService) http.Handler {
+func JWTMiddleware(next http.Handler, svc *grpc.ClientConn) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
 			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
 			return
 		}
-
 		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+		client := pb.NewUserServiceClient(svc)
 
-		username, err := svc.VerifyToken(context.Background(), tokenString)
+		userId, err := client.VerifyToken(context.Background(), &pb.VerifyTokenRequest{Token: tokenString})
 		if err != nil {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-		fmt.Println("Username: ", username)
-		setSessionHandler(w, r, username)
+		fmt.Println("userId: ", userId)
 
-		next.ServeHTTP(w, r)
-	})
-}
-func JWTMiddlewareRefreshToken(next http.Handler, svc auth.AuthenService) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("Authorization")
-		if tokenString == "" {
+		accountId, ok := strconv.Atoi(userId.Value)
+		if ok != nil {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		checkBarber, err := client.CheckExistedBarber(context.Background(), &pb.CheckExistedBarberRequest{Id: int32(accountId)})
+		if err != nil {
+			fmt.Printf("error when checking account: %v", err)
 			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
-			return
+		}
+		if checkBarber == nil || checkBarber.Value == common.RoleUnknown {
+			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
 		}
 
-		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-
-		username, err := svc.VerifyRefreshToken(context.Background(), tokenString)
-		if err != nil {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-		fmt.Println("Username: ", username)
-		setSessionHandler(w, r, username)
+		setSessionHandler(w, r, userId.Value)
 
 		next.ServeHTTP(w, r)
 	})

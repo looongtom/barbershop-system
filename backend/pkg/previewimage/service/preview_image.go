@@ -1,11 +1,11 @@
 package service
 
 import (
-	"DoAn/pkg/account/pb"
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/api"
 	"DoAn/pkg/previewimage/common"
 	"DoAn/pkg/previewimage/entity"
+	"DoAn/pkg/previewimage/pb"
 	"context"
 	"errors"
 	"fmt"
@@ -28,7 +28,7 @@ func (p PreviewImageService) UploadImages(ctx context.Context, request api.Updat
 		fmt.Printf("error when checking account: %v", err)
 		return nil, err
 	}
-	if checkBarber == nil {
+	if checkBarber == nil || checkBarber.Value == common.RoleUnknown {
 		return nil, errors.New("account does not exist")
 	}
 

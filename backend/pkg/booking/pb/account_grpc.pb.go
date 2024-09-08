@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	UserService_CheckExistedBarber_FullMethodName = "/UserService/CheckExistedBarber"
-	UserService_VerifyToken_FullMethodName        = "/UserService/VerifyToken"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -29,7 +28,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	CheckExistedBarber(ctx context.Context, in *CheckExistedBarberRequest, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
-	VerifyToken(ctx context.Context, in *VerifyTokenRequest, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
 }
 
 type userServiceClient struct {
@@ -49,21 +47,11 @@ func (c *userServiceClient) CheckExistedBarber(ctx context.Context, in *CheckExi
 	return out, nil
 }
 
-func (c *userServiceClient) VerifyToken(ctx context.Context, in *VerifyTokenRequest, opts ...grpc.CallOption) (*wrapperspb.StringValue, error) {
-	out := new(wrapperspb.StringValue)
-	err := c.cc.Invoke(ctx, UserService_VerifyToken_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // UserServiceServer is the server API for UserService service.
 // All implementations should embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
 	CheckExistedBarber(context.Context, *CheckExistedBarberRequest) (*wrapperspb.StringValue, error)
-	VerifyToken(context.Context, *VerifyTokenRequest) (*wrapperspb.StringValue, error)
 }
 
 // UnimplementedUserServiceServer should be embedded to have forward compatible implementations.
@@ -72,9 +60,6 @@ type UnimplementedUserServiceServer struct {
 
 func (UnimplementedUserServiceServer) CheckExistedBarber(context.Context, *CheckExistedBarberRequest) (*wrapperspb.StringValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckExistedBarber not implemented")
-}
-func (UnimplementedUserServiceServer) VerifyToken(context.Context, *VerifyTokenRequest) (*wrapperspb.StringValue, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method VerifyToken not implemented")
 }
 
 // UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -106,24 +91,6 @@ func _UserService_CheckExistedBarber_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_VerifyToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).VerifyToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_VerifyToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).VerifyToken(ctx, req.(*VerifyTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,10 +101,6 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckExistedBarber",
 			Handler:    _UserService_CheckExistedBarber_Handler,
-		},
-		{
-			MethodName: "VerifyToken",
-			Handler:    _UserService_VerifyToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

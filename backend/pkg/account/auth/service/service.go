@@ -4,19 +4,22 @@ import (
 	"DoAn/pkg/account/auth"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
 
 type AuthServiceStruct struct {
-	repo      auth.TokenRepository
-	secretKey []byte
+	repo          auth.TokenRepository
+	secretKey     []byte
+	secretRefresh []byte
 }
 
-func NewAuthService(cacheRepo auth.TokenRepository, secretKey []byte) auth.AuthenService {
+func NewAuthService(cacheRepo auth.TokenRepository, secretKey []byte, secretRefresh []byte) auth.AuthenService {
 	return &AuthServiceStruct{
-		repo:      cacheRepo,
-		secretKey: secretKey,
+		repo:          cacheRepo,
+		secretKey:     secretKey,
+		secretRefresh: secretRefresh,
 	}
 }
 
@@ -35,6 +38,24 @@ func (a AuthServiceStruct) VerifyToken(ctx context.Context, tokenString string) 
 	return claims.Username, nil
 }
 
+func (a AuthServiceStruct) CleanToken(ctx context.Context, userId string) error {
+	if userId == "*" {
+		userId = ""
+	}
+	listKeys, err := a.repo.GetAllTokenByUserid(ctx, userId)
+	if err != nil {
+		fmt.Printf("error while getting all token by userId: %v", err)
+		return err
+	}
+	for key := range listKeys {
+		err := a.repo.RemoveTokenByUserid(ctx, key)
+		if err != nil {
+			fmt.Printf("error while removing token by userId: %v	", err)
+		}
+	}
+	return nil
+}
+
 func (a AuthServiceStruct) LogoutToken(ctx context.Context, username, token string) error {
 	err := a.repo.SetBlacklistToken(ctx, username, token)
 	if err != nil {
@@ -44,7 +65,7 @@ func (a AuthServiceStruct) LogoutToken(ctx context.Context, username, token stri
 }
 
 func (a AuthServiceStruct) VerifyRefreshToken(ctx context.Context, token string) (string, error) {
-	claims, err := validateRefreshToken(token, a.secretKey)
+	claims, err := validateRefreshToken(token, a.secretRefresh)
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +79,7 @@ func (a AuthServiceStruct) CreateRefreshToken(ctx context.Context, username, pre
 			return "", "", err
 		}
 	}
-	refreshToken, err := generateRefreshToken(username, a.secretKey)
+	refreshToken, err := generateRefreshToken(username, a.secretRefresh)
 	if err != nil {
 		return "", "", err
 	}

@@ -2,6 +2,9 @@ package main
 
 import (
 	"DoAn/pkg/account"
+	"DoAn/pkg/account/auth"
+	repository2 "DoAn/pkg/account/auth/repository"
+	service2 "DoAn/pkg/account/auth/service"
 	"DoAn/pkg/account/database"
 	repository "DoAn/pkg/account/db"
 	"DoAn/pkg/account/endpoint"
@@ -28,6 +31,9 @@ func main() {
 	logger := log.NewLogfmtLogger(os.Stderr)
 	collectionMongo := database.ConnectMongo(os.Getenv("TokenCollectionMongo"))
 	collectionPostgres, err := database.ConnectPostgres()
+	collectionRedis := auth.ConnectRedis(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
+	secretKey := []byte(os.Getenv("SECRET_JWT"))
+	secretRefresh := []byte(os.Getenv("SECRET_REFRESH"))
 	if err != nil {
 		logV.Fatalf("Error getting env, %v", err)
 	}
@@ -42,6 +48,14 @@ func main() {
 		}
 		svc = service.NewService(repo, nil, logger)
 	}
+
+	var authenSvc auth.AuthenService
+	authenSvc = service2.AuthServiceStruct{}
+	{
+		repo2 := repository2.NewTokenRepository(collectionRedis)
+		authenSvc = service2.NewAuthService(repo2, secretKey, secretRefresh)
+	}
+
 	errors := make(chan error)
 	go func() {
 		listener, err := net.Listen("tcp", ":9090")
@@ -51,7 +65,10 @@ func main() {
 		}
 		gRPCServer := grpc.NewServer()
 		pb.RegisterUserServiceServer(gRPCServer, transport.NewGRPCServer(ctx,
-			endpoint.Endpoints{CheckExistedBarberEndpoint: endpoint.MakeCheckExistedBarberEndpoint(svc)}))
+			endpoint.Endpoints{
+				CheckExistedBarberEndpoint: endpoint.MakeCheckExistedBarberEndpoint(svc),
+				VerifyTokenEndpoint:        endpoint.MakeVerifyTokenEndpoint(authenSvc),
+			}))
 
 		logger.Log("msg", "Account gRPC server", "port", ":9090")
 		errors <- gRPCServer.Serve(listener)

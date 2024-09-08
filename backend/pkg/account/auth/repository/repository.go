@@ -14,6 +14,38 @@ type RedisTokenRepository struct {
 	Redis *redis.Client
 }
 
+func (r RedisTokenRepository) GetAllTokenByUserid(ctx context.Context, userId string) (map[string]string, error) {
+	//pattern := fmt.Sprintf("%s*", userId)
+	results := make(map[string]string)
+	iter := r.Redis.Scan(ctx, 0, "*", 0).Iterator()
+	for iter.Next(ctx) {
+		key := iter.Val()
+		value, err := r.Redis.Get(ctx, key).Result()
+		if err != nil {
+			log.Printf("Failed to get value for key %s: %v\n", key, err)
+			continue
+		}
+		results[key] = value
+	}
+	if err := iter.Err(); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (r RedisTokenRepository) RemoveTokenByUserid(ctx context.Context, userId string) error {
+	result := r.Redis.Del(ctx, userId)
+	if err := result.Err(); err != nil {
+		log.Printf("Failed to delete key %s: %v\n", userId, err)
+		return err
+	}
+	if result.Val() < 1 {
+		log.Printf("Key %s not found\n", userId)
+		return fmt.Errorf("key %s not found", userId)
+	}
+	return nil
+}
+
 func (r RedisTokenRepository) ValidateTokenInRedis(ctx context.Context, userId, token string) (bool, error) {
 	key := fmt.Sprintf("%s:%s", userId, token)
 	result, err := r.Redis.Get(ctx, key).Int()
@@ -38,7 +70,8 @@ func (r RedisTokenRepository) SetBlacklistToken(ctx context.Context, userId, tok
 	return nil
 }
 
-func (r RedisTokenRepository) SetRefreshToken(ctx context.Context, userId, token string, expiresIn time.Duration) error {
+func (r RedisTokenRepository) SetRefreshToken(ctx context.Context,
+	userId, token string, expiresIn time.Duration) error {
 	key := fmt.Sprintf("%s:%s", userId, token)
 	if err := r.Redis.Set(ctx, key, 1, expiresIn).Err(); err != nil {
 		log.Printf("Failed to set refresh token for userId/tokenId %s/%s: %v \n", userId, token, err)

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-kit/kit/log"
+	"strconv"
 )
 
 type UserServiceStruct struct {
@@ -25,19 +26,19 @@ func (u UserServiceStruct) ChangePassFirstTime(ctx context.Context, username, pa
 }
 
 func (u UserServiceStruct) Login(ctx context.Context, user entity.Account) (*string, *string, error) {
-	loginSuccess, err := u.repository.Login(ctx, user)
+	userId, err := u.repository.Login(ctx, user)
 	if err != nil {
 		return nil, nil, err
 	}
-	if !loginSuccess {
+	if userId == nil {
 		return nil, nil, errors.New("username or password incorrect")
 	}
-	accessToken, err := u.authenSvc.CreateAccessToken(ctx, user.Username)
+	accessToken, err := u.authenSvc.CreateAccessToken(ctx, strconv.Itoa(*userId))
 	if err != nil {
 		fmt.Printf("error while creating access token: %v", err)
 		return nil, nil, err
 	}
-	refreshToken, _, err := u.authenSvc.CreateRefreshToken(ctx, user.Username, "")
+	refreshToken, _, err := u.authenSvc.CreateRefreshToken(ctx, strconv.Itoa(*userId), "")
 	if err != nil {
 		fmt.Printf("error while creating refresh token: %v", err)
 		return nil, nil, err

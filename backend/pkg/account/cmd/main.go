@@ -10,15 +10,41 @@ import (
 	"DoAn/pkg/account/middleware"
 	"DoAn/pkg/account/service"
 	"DoAn/pkg/account/transport"
+	"context"
+	"fmt"
 	"github.com/joho/godotenv"
 	logV "log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 )
+
+func scheduledTask(svc auth.AuthenService) {
+	err := svc.CleanToken(context.Background(), "*")
+	if err != nil {
+		fmt.Printf("error while cleaning token: %v", err)
+	}
+	fmt.Println("Task executed at:", time.Now())
+}
+
+func scheduleDailyAt(hour, min, sec int, task func(svc auth.AuthenService)) {
+	for {
+		now := time.Now()
+		scheduledTime := time.Date(now.Year(), now.Month(), now.Day(), hour, min, sec, 0, now.Location())
+		if now.After(scheduledTime) {
+			scheduledTime = scheduledTime.Add(24 * time.Hour)
+		}
+		duration := time.Until(scheduledTime)
+
+		timer := time.NewTimer(duration)
+		<-timer.C
+		task(service2.AuthServiceStruct{})
+	}
+}
 
 func main() {
 	//read the account.env file
@@ -32,6 +58,20 @@ func main() {
 	collectionPostgres, err := database.ConnectPostgres()
 	collectionRedis := auth.ConnectRedis(os.Getenv("REDIS_ADDRESS"), os.Getenv("REDIS_PASSWORD"))
 	secretKey := []byte(os.Getenv("SECRET_JWT"))
+	secretRefresh := []byte(os.Getenv("SECRET_REFRESH"))
+
+	var scheduledTime time.Time
+	scheduledTimeStr := os.Getenv("SCHEDULED_TIME")
+	if scheduledTimeStr == "" {
+		fmt.Println("SCHEDULED_TIME not set in .env file")
+		scheduledTime = time.Now()
+	}
+	scheduledTime, err = time.Parse("15:04:05", scheduledTimeStr)
+	if err != nil {
+		fmt.Printf("Error parsing scheduled time: %v\n", err)
+		return
+	}
+	fmt.Println("Scheduled time: ", scheduledTime)
 
 	if err != nil {
 		logV.Fatalf("Error getting env, %v", err)
@@ -42,7 +82,7 @@ func main() {
 	authenSvc = service2.AuthServiceStruct{}
 	{
 		repo2 := repository2.NewTokenRepository(collectionRedis)
-		authenSvc = service2.NewAuthService(repo2, secretKey)
+		authenSvc = service2.NewAuthService(repo2, secretKey, secretRefresh)
 	}
 
 	var svc account.UserService
@@ -53,9 +93,11 @@ func main() {
 			logV.Fatalf("Error getting env, %v", err)
 		}
 		repo2 := repository2.NewTokenRepository(collectionRedis)
-		authenSvc = service2.NewAuthService(repo2, secretKey)
+		authenSvc = service2.NewAuthService(repo2, secretKey, secretRefresh)
 		svc = service.NewService(repo, authenSvc, logger)
 	}
+
+	//go scheduleDailyAt(scheduledTime.Hour(), scheduledTime.Minute(), scheduledTime.Second(), scheduledTask)
 
 	RegisterUserHandler := httptransport.NewServer(
 		transport.MakeRegisterUserEndpoints(svc),
@@ -97,6 +139,9 @@ func main() {
 
 	logger.Log("msg", "HTTP", "addr", ":8000")
 	logger.Log("err", http.ListenAndServe(":8000", nil))
+
+	// Keep the main function running
+	select {}
 }
 
 func addCorsHeaders(handler http.Handler) http.Handler {

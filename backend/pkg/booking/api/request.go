@@ -1,5 +1,8 @@
 package api
 
+type VerifyTokenRequest struct {
+	Token string `json:"token"`
+}
 type BookingRequest struct {
 	CustomerID    int     `json:"customer_id"`
 	BarberId      int     `json:"barber_id"`

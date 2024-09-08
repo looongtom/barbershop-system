@@ -1,12 +1,10 @@
 package service
 
 import (
-	"DoAn/pkg/account/pb"
 	"DoAn/pkg/booking"
 	"DoAn/pkg/booking/api"
 	kafka2 "DoAn/pkg/booking/kafka"
-	pbService "DoAn/pkg/servicing/pb"
-	pbTimeslot "DoAn/pkg/timeslot/pb"
+	"DoAn/pkg/booking/pb"
 	"context"
 	"encoding/json"
 	"errors"
@@ -143,8 +141,8 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
 	//call grpc api
 	client := pb.NewUserServiceClient(b.connAccount)
-	clientTimeslot := pbTimeslot.NewTimeslotServiceClient(b.connTimeslot)
-	clientService := pbService.NewServicingServiceClient(b.connService)
+	clientTimeslot := pb.NewTimeslotServiceClient(b.connTimeslot)
+	clientService := pb.NewServicingServiceClient(b.connService)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -167,7 +165,7 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 	fmt.Printf("checkBarber: %s \n ", checkBarber.Value)
 	fmt.Printf("checkUser: %s \n", checkUser.Value)
 
-	checkTimeslot, err := clientTimeslot.CheckAvailableTimeslot(ctx, &pbTimeslot.CheckAvailableTimeslotRequest{Id: int32(booking.SlotId)})
+	checkTimeslot, err := clientTimeslot.CheckAvailableTimeslot(ctx, &pb.CheckAvailableTimeslotRequest{Id: int32(booking.SlotId)})
 	if err != nil {
 		fmt.Printf("error when checking timeslot: %v", err)
 		return nil, err
@@ -178,14 +176,14 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 	}
 
 	for _, service := range booking.ListServiceId {
-		checkService, err := clientService.GetServiceById(ctx, &pbService.GetServiceByIdRequest{Id: int32(service)})
+		checkService, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(service)})
 		if err != nil || checkService == nil {
 			fmt.Printf("error when checking service: %v", err)
 			return nil, errors.New("error when checking service")
 		}
 	}
 
-	updatedTimeslot, err := clientTimeslot.UpdateStatusTimeslot(ctx, &pbTimeslot.UpdateStatusTimeslotRequest{Id: int32(booking.SlotId), Status: "Booked"})
+	updatedTimeslot, err := clientTimeslot.UpdateStatusTimeslot(ctx, &pb.UpdateStatusTimeslotRequest{Id: int32(booking.SlotId), Status: "Booked"})
 	if err != nil {
 		fmt.Printf("error when updating timeslot: %v", err)
 		return nil, errors.New("error when updating timeslot")
@@ -219,7 +217,7 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 }
 
 func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, error) {
-	clientService := pbService.NewServicingServiceClient(b.connService)
+	clientService := pb.NewServicingServiceClient(b.connService)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -236,7 +234,7 @@ func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, 
 	}
 	var listServiceName []string
 	for _, id := range listIdServices {
-		service, err := clientService.GetServiceById(ctx, &pbService.GetServiceByIdRequest{Id: int32(id)})
+		service, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
 		if err != nil {
 			fmt.Printf("error when getting service: %v", err)
 			return nil, err

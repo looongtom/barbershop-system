@@ -4,6 +4,7 @@ import (
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/database"
 	repository "DoAn/pkg/previewimage/db"
+	"DoAn/pkg/previewimage/middleware"
 	"DoAn/pkg/previewimage/service"
 	"DoAn/pkg/previewimage/transport"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	logV "log"
 	"net/http"
 	"os"
@@ -34,6 +36,13 @@ func main() {
 	}
 	r := mux.NewRouter()
 
+	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcAccount.Close()
+
 	var svc previewimage.PreviewImageService
 	svc = service.PreviewImageService{}
 	{
@@ -41,13 +50,6 @@ func main() {
 		if err != nil {
 			logV.Fatalf("Error loading repository, %v", err)
 		}
-
-		connGrpcAccount, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
-		if err != nil {
-			fmt.Printf("did not connect: %v", err)
-			logV.Fatalf("Error getting env, %v", err)
-		}
-		defer connGrpcAccount.Close()
 
 		svc = service.NewService(repo, logger, connGrpcAccount)
 	}
@@ -66,8 +68,8 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/previewimage/create", CreatePreviewImageHandler).Methods("POST")
-	r.Handle("/previewimage/upload", UploadImagesHandler).Methods("POST")
+	r.Handle("/previewimage/create", middleware.JWTMiddleware(CreatePreviewImageHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/previewimage/upload", middleware.JWTMiddleware(UploadImagesHandler, connGrpcAccount)).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8005")
 	logger.Log("err", http.ListenAndServe(":8005", nil))

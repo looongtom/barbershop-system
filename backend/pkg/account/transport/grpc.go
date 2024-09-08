@@ -11,6 +11,17 @@ import (
 
 type GRPCServer struct {
 	checkExistedBarber gt.Handler
+	verifyToken        gt.Handler
+}
+
+func (G GRPCServer) VerifyToken(ctx context.Context, request *pb.VerifyTokenRequest) (*wrapperspb.StringValue, error) {
+	_, resp, err := G.verifyToken.ServeGRPC(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	var resGrpc wrapperspb.StringValue
+	resGrpc.Value = resp.(string)
+	return &resGrpc, nil
 }
 
 func (G GRPCServer) CheckExistedBarber(ctx context.Context, request *pb.CheckExistedBarberRequest) (*wrapperspb.StringValue, error) {
@@ -29,6 +40,11 @@ func NewGRPCServer(_ context.Context, endpoints endpoint.Endpoints) pb.UserServi
 			endpoints.CheckExistedBarberEndpoint,
 			endpoint.DecodeCheckExistedUser,
 			endpoint.EncodeCheckExistedUser,
+		),
+		verifyToken: gt.NewServer(
+			endpoints.VerifyTokenEndpoint,
+			endpoint.DecodeVerifyToken,
+			endpoint.EncodeVerifyToken,
 		),
 	}
 }

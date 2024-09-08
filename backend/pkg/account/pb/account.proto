@@ -26,7 +26,13 @@ message Role {
 message CheckExistedBarberRequest {
     int32 id =1;
 }
+
+message VerifyTokenRequest{
+    string token = 1;
+}
+
 //return string message
 service UserService {
     rpc CheckExistedBarber(CheckExistedBarberRequest) returns (google.protobuf.StringValue) {};
+    rpc VerifyToken(VerifyTokenRequest) returns (google.protobuf.StringValue) {};
 }
