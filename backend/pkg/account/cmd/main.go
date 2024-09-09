@@ -61,17 +61,17 @@ func main() {
 	secretRefresh := []byte(os.Getenv("SECRET_REFRESH"))
 
 	var scheduledTime time.Time
-	//scheduledTimeStr := os.Getenv("SCHEDULED_TIME")
-	//if scheduledTimeStr == "" {
-	//	fmt.Println("SCHEDULED_TIME not set in .env file")
-	//	scheduledTime = time.Now()
-	//}
-	//scheduledTime, err = time.Parse("15:04:05", scheduledTimeStr)
-	//if err != nil {
-	//	fmt.Printf("Error parsing scheduled time: %v\n", err)
-	//	return
-	//}
-	scheduledTime = time.Now().Add(5 * time.Second)
+	scheduledTimeStr := os.Getenv("SCHEDULED_TIME")
+	if scheduledTimeStr == "" {
+		fmt.Println("SCHEDULED_TIME not set in .env file")
+		scheduledTime = time.Now()
+	}
+	scheduledTime, err = time.Parse("15:04:05", scheduledTimeStr)
+	if err != nil {
+		fmt.Printf("Error parsing scheduled time: %v\n", err)
+		return
+	}
+	//scheduledTime = time.Now().Add(5 * time.Second)
 	fmt.Println("Scheduled time: ", scheduledTime)
 
 	if err != nil {
