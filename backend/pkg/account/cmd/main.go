@@ -24,14 +24,14 @@ import (
 )
 
 func scheduledTask(svc auth.AuthenService) {
-	err := svc.CleanToken(context.Background(), "*")
+	err := svc.CleanToken(context.Background())
 	if err != nil {
 		fmt.Printf("error while cleaning token: %v", err)
 	}
 	fmt.Println("Task executed at:", time.Now())
 }
 
-func scheduleDailyAt(hour, min, sec int, task func(svc auth.AuthenService)) {
+func scheduleDailyAt(hour, min, sec int, svc auth.AuthenService, task func(svc auth.AuthenService)) {
 	for {
 		now := time.Now()
 		scheduledTime := time.Date(now.Year(), now.Month(), now.Day(), hour, min, sec, 0, now.Location())
@@ -42,7 +42,7 @@ func scheduleDailyAt(hour, min, sec int, task func(svc auth.AuthenService)) {
 
 		timer := time.NewTimer(duration)
 		<-timer.C
-		task(service2.AuthServiceStruct{})
+		task(svc)
 	}
 }
 
@@ -61,16 +61,17 @@ func main() {
 	secretRefresh := []byte(os.Getenv("SECRET_REFRESH"))
 
 	var scheduledTime time.Time
-	scheduledTimeStr := os.Getenv("SCHEDULED_TIME")
-	if scheduledTimeStr == "" {
-		fmt.Println("SCHEDULED_TIME not set in .env file")
-		scheduledTime = time.Now()
-	}
-	scheduledTime, err = time.Parse("15:04:05", scheduledTimeStr)
-	if err != nil {
-		fmt.Printf("Error parsing scheduled time: %v\n", err)
-		return
-	}
+	//scheduledTimeStr := os.Getenv("SCHEDULED_TIME")
+	//if scheduledTimeStr == "" {
+	//	fmt.Println("SCHEDULED_TIME not set in .env file")
+	//	scheduledTime = time.Now()
+	//}
+	//scheduledTime, err = time.Parse("15:04:05", scheduledTimeStr)
+	//if err != nil {
+	//	fmt.Printf("Error parsing scheduled time: %v\n", err)
+	//	return
+	//}
+	scheduledTime = time.Now().Add(5 * time.Second)
 	fmt.Println("Scheduled time: ", scheduledTime)
 
 	if err != nil {
@@ -83,6 +84,7 @@ func main() {
 	{
 		repo2 := repository2.NewTokenRepository(collectionRedis)
 		authenSvc = service2.NewAuthService(repo2, secretKey, secretRefresh)
+		go scheduleDailyAt(scheduledTime.Hour(), scheduledTime.Minute(), scheduledTime.Second(), authenSvc, scheduledTask)
 	}
 
 	var svc account.UserService
@@ -96,8 +98,6 @@ func main() {
 		authenSvc = service2.NewAuthService(repo2, secretKey, secretRefresh)
 		svc = service.NewService(repo, authenSvc, logger)
 	}
-
-	//go scheduleDailyAt(scheduledTime.Hour(), scheduledTime.Minute(), scheduledTime.Second(), scheduledTask)
 
 	RegisterUserHandler := httptransport.NewServer(
 		transport.MakeRegisterUserEndpoints(svc),

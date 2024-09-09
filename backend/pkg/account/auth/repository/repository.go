@@ -14,10 +14,10 @@ type RedisTokenRepository struct {
 	Redis *redis.Client
 }
 
-func (r RedisTokenRepository) GetAllTokenByUserid(ctx context.Context, userId string) (map[string]string, error) {
-	//pattern := fmt.Sprintf("%s*", userId)
+func (r RedisTokenRepository) GetAllTokenByUserid(ctx context.Context) (map[string]string, error) {
+	pattern := "*"
 	results := make(map[string]string)
-	iter := r.Redis.Scan(ctx, 0, "*", 0).Iterator()
+	iter := r.Redis.Scan(ctx, 0, pattern, 0).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
 		value, err := r.Redis.Get(ctx, key).Result()
@@ -33,15 +33,15 @@ func (r RedisTokenRepository) GetAllTokenByUserid(ctx context.Context, userId st
 	return results, nil
 }
 
-func (r RedisTokenRepository) RemoveTokenByUserid(ctx context.Context, userId string) error {
-	result := r.Redis.Del(ctx, userId)
+func (r RedisTokenRepository) RemoveTokenByKey(ctx context.Context, key string) error {
+	result := r.Redis.Del(ctx, key)
 	if err := result.Err(); err != nil {
-		log.Printf("Failed to delete key %s: %v\n", userId, err)
+		log.Printf("Failed to delete key %s: %v\n", key, err)
 		return err
 	}
 	if result.Val() < 1 {
-		log.Printf("Key %s not found\n", userId)
-		return fmt.Errorf("key %s not found", userId)
+		log.Printf("Key %s not found\n", key)
+		return fmt.Errorf("key %s not found", key)
 	}
 	return nil
 }

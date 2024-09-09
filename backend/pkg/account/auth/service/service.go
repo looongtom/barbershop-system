@@ -38,17 +38,17 @@ func (a AuthServiceStruct) VerifyToken(ctx context.Context, tokenString string) 
 	return claims.Username, nil
 }
 
-func (a AuthServiceStruct) CleanToken(ctx context.Context, userId string) error {
-	if userId == "*" {
-		userId = ""
-	}
-	listKeys, err := a.repo.GetAllTokenByUserid(ctx, userId)
+func (a AuthServiceStruct) CleanToken(ctx context.Context) error {
+	listKeys, err := a.repo.GetAllTokenByUserid(ctx)
 	if err != nil {
 		fmt.Printf("error while getting all token by userId: %v", err)
 		return err
 	}
-	for key := range listKeys {
-		err := a.repo.RemoveTokenByUserid(ctx, key)
+	for key, value := range listKeys {
+		if value == "0" {
+			fmt.Printf("Found key : %s need to be removed\n", key)
+		}
+		err := a.repo.RemoveTokenByKey(ctx, key)
 		if err != nil {
 			fmt.Printf("error while removing token by userId: %v	", err)
 		}

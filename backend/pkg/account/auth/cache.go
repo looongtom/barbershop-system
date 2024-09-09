@@ -12,7 +12,7 @@ type AuthenService interface {
 	VerifyRefreshToken(ctx context.Context, token string) (string, error)
 
 	LogoutToken(ctx context.Context, username, token string) error
-	CleanToken(ctx context.Context, userId string) error
+	CleanToken(ctx context.Context) error
 }
 
 type TokenRepository interface {
@@ -22,6 +22,6 @@ type TokenRepository interface {
 
 	SetBlacklistToken(ctx context.Context, userId, token string) error
 	ValidateTokenInRedis(ctx context.Context, userId, token string) (bool, error)
-	GetAllTokenByUserid(ctx context.Context, userId string) (map[string]string, error)
-	RemoveTokenByUserid(ctx context.Context, userId string) error
+	GetAllTokenByUserid(ctx context.Context) (map[string]string, error)
+	RemoveTokenByKey(ctx context.Context, key string) error
 }
