@@ -3,8 +3,12 @@ package main
 import (
 	"DoAn/pkg/servicing/database"
 	repository "DoAn/pkg/servicing/db"
+	"DoAn/pkg/servicing/middleware"
 	"DoAn/pkg/servicing/service"
 	transport "DoAn/pkg/servicing/transport"
+	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
 
 	"DoAn/pkg/servicing"
@@ -29,6 +33,13 @@ func main() {
 		logV.Fatalf("Error getting env, %v", err)
 	}
 	r := mux.NewRouter()
+
+	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcAccount.Close()
 
 	var svc servicing.ServicingService
 	svc = service.ServicingStruct{}
@@ -90,15 +101,15 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/servicing/category/create", CreateCategoryHandler).Methods("POST")
-	r.Handle("/servicing/service/create", CreateServiceHandler).Methods("POST")
-	r.Handle("/servicing/service/update", UpdateServiceHandler).Methods("POST")
-	r.Handle("/servicing/category/update", UpdateCategoryHandler).Methods("POST")
+	r.Handle("/servicing/category/create", middleware.JWTMiddlewareAdmin(CreateCategoryHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/servicing/service/create", middleware.JWTMiddlewareAdmin(CreateServiceHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/servicing/service/update", middleware.JWTMiddlewareAdmin(UpdateServiceHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/servicing/category/update", middleware.JWTMiddlewareAdmin(UpdateCategoryHandler, connGrpcAccount)).Methods("POST")
 
-	r.Handle("/servicing/category/get-list", GetListCategoryHandler).Methods("GET")
-	r.Handle("/servicing/service/get-list", GetListServiceHandler).Methods("GET")
-	r.Handle("/servicing/category/get", GetCategoryHandler).Methods("GET")
-	r.Handle("/servicing/service/get", GetServiceHandler).Methods("GET")
+	r.Handle("/servicing/category/get-list", middleware.JWTMiddleware(GetListCategoryHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/servicing/service/get-list", middleware.JWTMiddleware(GetListServiceHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/servicing/category/get", middleware.JWTMiddleware(GetCategoryHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/servicing/service/get", middleware.JWTMiddleware(GetServiceHandler, connGrpcAccount)).Methods("GET")
 
 	logger.Log("msg", "HTTP", "addr", ":8001")
 	logger.Log("err", http.ListenAndServe(":8001", nil))

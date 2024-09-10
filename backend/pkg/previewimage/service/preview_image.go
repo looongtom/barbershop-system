@@ -21,6 +21,15 @@ type PreviewImageService struct {
 	logger      log.Logger
 }
 
+func NewService(repo previewimage.PreviewImageRepository, logger log.Logger,
+	conn *grpc.ClientConn) previewimage.PreviewImageService {
+	return &PreviewImageService{
+		repository:  repo,
+		logger:      logger,
+		connAccount: conn,
+	}
+}
+
 func (p PreviewImageService) UploadImages(ctx context.Context, request api.UpdateImageRequest) (interface{}, error) {
 	clientAccount := pb.NewUserServiceClient(p.connAccount)
 	checkBarber, err := clientAccount.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(request.AccountId)})
@@ -98,13 +107,4 @@ func (p PreviewImageService) GetListPreviewImageByAccountId(ctx context.Context,
 		return nil, err
 	}
 	return resp, nil
-}
-
-func NewService(repo previewimage.PreviewImageRepository, logger log.Logger,
-	conn *grpc.ClientConn) previewimage.PreviewImageService {
-	return &PreviewImageService{
-		repository:  repo,
-		logger:      logger,
-		connAccount: conn,
-	}
 }

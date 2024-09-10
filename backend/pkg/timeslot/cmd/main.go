@@ -2,7 +2,10 @@ package main
 
 import (
 	"DoAn/pkg/timeslot/database"
+	"DoAn/pkg/timeslot/middleware"
 	"DoAn/pkg/timeslot/transport"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"DoAn/pkg/timeslot"
 	repository "DoAn/pkg/timeslot/db"
@@ -33,6 +36,13 @@ func main() {
 		logV.Fatalf("Error creating table: %v", err)
 	}
 	r := mux.NewRouter()
+
+	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcAccount.Close()
 
 	var svc timeslot.TimeSlotService
 	svc = service.TimeSlotService{}
@@ -70,9 +80,9 @@ func main() {
 	)
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Methods("POST").Path("/timeslot/create-or-update").Handler(CreateOrUpdateTimeslotHandler)
-	r.Methods("POST").Path("/timeslot/create-by-list").Handler(CreateListTimeslotHandler)
-	r.Methods("POST").Path("/timeslot/find").Handler(GetListTimeSlotByBarberIdHandler)
+	r.Handle("/timeslot/find", GetListTimeSlotByBarberIdHandler).Methods("POST")
+	r.Handle("/timeslot/create-or-update", middleware.JWTMiddlewareAdmin(CreateOrUpdateTimeslotHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/timeslot/create-by-list", middleware.JWTMiddlewareAdmin(CreateListTimeslotHandler, connGrpcAccount)).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8003")
 	logger.Log("err", http.ListenAndServe(":8003", nil))

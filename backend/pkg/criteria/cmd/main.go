@@ -4,11 +4,15 @@ import (
 	"DoAn/pkg/criteria"
 	"DoAn/pkg/criteria/database"
 	repository "DoAn/pkg/criteria/db"
+	"DoAn/pkg/criteria/middleware"
 	"DoAn/pkg/criteria/service"
 	"DoAn/pkg/criteria/transport"
+	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	logV "log"
 	"net/http"
 	"os"
@@ -31,6 +35,13 @@ func main() {
 		logV.Fatalf("Error creating table: %v", err)
 	}
 	r := mux.NewRouter()
+
+	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcAccount.Close()
 
 	var svc criteria.CriteriaService
 	svc = service.CriteriaStruct{}
@@ -91,15 +102,15 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/criteria/category/create-or-update", CreateOrUpdateCategoryHandler).Methods("POST")
-	r.Handle("/criteria/service/create-or-update", CreateOrUpdateCriteriaHandler).Methods("POST")
+	r.Handle("/criteria/category/create-or-update", middleware.JWTMiddlewareBarber(CreateOrUpdateCategoryHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/criteria/service/create-or-update", middleware.JWTMiddlewareBarber(CreateOrUpdateCriteriaHandler, connGrpcAccount)).Methods("POST")
 
-	r.Handle("/criteria/category/get-list", GetListCategoryHandler).Methods("GET")
-	r.Handle("/criteria/service/get-list", GetListCriteriaHandler).Methods("GET")
-	r.Handle("/criteria/category/get", GetCategoryHandler).Methods("GET")
-	r.Handle("/criteria/service/get", GetCriteriaHandler).Methods("GET")
-	r.Handle("/criteria/category/delete", DeleteCategoryHandler).Methods("DELETE")
-	r.Handle("/criteria/service/delete", DeleteCriteriaHandler).Methods("DELETE")
+	r.Handle("/criteria/category/get-list", middleware.JWTMiddleware(GetListCategoryHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/criteria/service/get-list", middleware.JWTMiddleware(GetListCriteriaHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/criteria/category/get", middleware.JWTMiddleware(GetCategoryHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/criteria/service/get", middleware.JWTMiddleware(GetCriteriaHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/criteria/category/delete", middleware.JWTMiddlewareAdmin(DeleteCategoryHandler, connGrpcAccount)).Methods("DELETE")
+	r.Handle("/criteria/service/delete", middleware.JWTMiddlewareAdmin(DeleteCriteriaHandler, connGrpcAccount)).Methods("DELETE")
 
 	logger.Log("msg", "HTTP", "addr", ":8006")
 	logger.Log("err", http.ListenAndServe(":8006", nil))

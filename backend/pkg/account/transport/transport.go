@@ -88,6 +88,9 @@ func MakeLoginEndpoints(u account.UserService) endpoint.Endpoint {
 			Username: req.Username,
 			Password: req.Password,
 		})
+		if err != nil {
+			return nil, err
+		}
 		resp := LoginResponse{
 			RefreshToken: *refreshToken,
 			AccessToken:  *accessToken,

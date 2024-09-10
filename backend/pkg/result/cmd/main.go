@@ -4,11 +4,15 @@ import (
 	"DoAn/pkg/result"
 	"DoAn/pkg/result/database"
 	repository "DoAn/pkg/result/db"
+	"DoAn/pkg/result/middleware"
 	"DoAn/pkg/result/service"
 	"DoAn/pkg/result/transport"
+	"fmt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	logV "log"
 	"net/http"
 	"os"
@@ -31,6 +35,13 @@ func main() {
 		logV.Fatalf("Error creating table: %v", err)
 	}
 	r := mux.NewRouter()
+
+	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcAccount.Close()
 
 	var svc result.ResultService
 	svc = service.ResultService{}
@@ -68,10 +79,10 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Methods("POST").Path("/createOrUpdateResult").Handler(CreateOrUpdateResultHandler)
-	r.Methods("GET").Path("/getResultByBarberId").Handler(GetResultByBarberIdHandler)
-	r.Methods("GET").Path("/getResultByUserId").Handler(GetResultByUserIdHandler)
-	r.Methods("GET").Path("/getResultByBookingId").Handler(GetResultByBookingIdHandler)
+	r.Methods("POST").Path("/createOrUpdateResult").Handler(middleware.JWTMiddlewareBarber(CreateOrUpdateResultHandler, connGrpcAccount))
+	r.Methods("GET").Path("/getResultByBarberId").Handler(middleware.JWTMiddleware(GetResultByBarberIdHandler, connGrpcAccount))
+	r.Methods("GET").Path("/getResultByUserId").Handler(middleware.JWTMiddleware(GetResultByUserIdHandler, connGrpcAccount))
+	r.Methods("GET").Path("/getResultByBookingId").Handler(middleware.JWTMiddleware(GetResultByBookingIdHandler, connGrpcAccount))
 
 	logger.Log("msg", "HTTP", "addr", ":8007")
 	logger.Log("err", http.ListenAndServe(":8007", nil))

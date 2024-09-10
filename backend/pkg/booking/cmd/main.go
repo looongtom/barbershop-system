@@ -4,10 +4,12 @@ import (
 	"DoAn/pkg/booking"
 	"DoAn/pkg/booking/database"
 	repository "DoAn/pkg/booking/db"
+	"DoAn/pkg/booking/middleware"
 	"DoAn/pkg/booking/service"
 	"DoAn/pkg/booking/transport"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"fmt"
 	logV "log"
@@ -41,6 +43,13 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+
+	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcAccount.Close()
 
 	var svc booking.BookingService
 	svc = service.BookingStruct{}
@@ -112,11 +121,11 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/booking/create", CreateBookingHandler).Methods("POST")
-	r.Handle("/booking/create-kafka", CreateBookingKafkaHandler).Methods("POST")
-	r.Handle("/booking/update", UpdateBookingHandler).Methods("POST")
-	r.Handle("/booking/get-by-id", GetBookingHandler).Methods("GET")
-	r.Handle("/booking/get-list", GetListBookingHandler).Methods("GET")
+	r.Handle("/booking/create", middleware.JWTMiddleware(CreateBookingHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/booking/create-kafka", middleware.JWTMiddleware(CreateBookingKafkaHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/booking/update", middleware.JWTMiddlewareBarber(UpdateBookingHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/booking/get-by-id", middleware.JWTMiddleware(GetBookingHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/booking/get-list", middleware.JWTMiddleware(GetListBookingHandler, connGrpcAccount)).Methods("GET")
 
 	logger.Log("msg", "HTTP", "addr", ":8002")
 	logger.Log("err", http.ListenAndServe(":8002", nil))
