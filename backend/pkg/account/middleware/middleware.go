@@ -4,9 +4,10 @@ import (
 	"DoAn/pkg/account/auth"
 	"context"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/sessions"
 )
 
 var store = sessions.NewCookieStore([]byte("something-very-secret"))

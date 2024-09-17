@@ -6,8 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-kit/kit/endpoint"
 	"net/http"
+
+	"github.com/go-kit/kit/endpoint"
 )
 
 type (

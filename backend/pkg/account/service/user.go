@@ -7,8 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-kit/kit/log"
 	"strconv"
+
+	"github.com/go-kit/kit/log"
 )
 
 type UserServiceStruct struct {

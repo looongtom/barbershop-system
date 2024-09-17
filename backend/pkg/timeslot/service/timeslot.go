@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/go-kit/kit/log"
 )
 

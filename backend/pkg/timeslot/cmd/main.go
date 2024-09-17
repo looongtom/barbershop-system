@@ -4,6 +4,7 @@ import (
 	"DoAn/pkg/timeslot/database"
 	"DoAn/pkg/timeslot/middleware"
 	"DoAn/pkg/timeslot/transport"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -11,12 +12,13 @@ import (
 	repository "DoAn/pkg/timeslot/db"
 	"DoAn/pkg/timeslot/service"
 	"fmt"
-	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	logV "log"
 	"net/http"
 	"os"
+
+	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 
 	"github.com/go-kit/kit/log"
 )

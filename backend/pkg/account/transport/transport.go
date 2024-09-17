@@ -1,17 +1,19 @@
 package transport
 
 import (
-	"DoAn/pkg/account"
-	"DoAn/pkg/account/auth"
-	"DoAn/pkg/account/entity"
-	"DoAn/pkg/account/middleware"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
+	"DoAn/pkg/account"
+	"DoAn/pkg/account/auth"
+	"DoAn/pkg/account/entity"
+	"DoAn/pkg/account/middleware"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/go-kit/kit/endpoint"
-	"net/http"
 
 	"golang.org/x/oauth2"
 )
@@ -22,7 +24,7 @@ var (
 	oauthStateString = "pseudo-random"
 )
 
-//func init() {
+// func init() {
 //	err := godotenv.Load("./backend/pkg/account/cmd/account.env")
 //	if err != nil {
 //		log.Fatalln("Error loading account.env file")
@@ -37,7 +39,7 @@ var (
 //		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 //		Endpoint:     google.Endpoint,
 //	}
-//}
+// }
 
 type (
 	RegisterUserRequest struct {
@@ -57,6 +59,7 @@ type (
 		Password string `json:"password"`
 	}
 	LoginResponse struct {
+		Username     string `json:"username"`
 		RefreshToken string `json:"refreshToken"`
 		AccessToken  string `json:"accessToken"`
 	}
@@ -92,6 +95,7 @@ func MakeLoginEndpoints(u account.UserService) endpoint.Endpoint {
 			return nil, err
 		}
 		resp := LoginResponse{
+			Username:     req.Username,
 			RefreshToken: *refreshToken,
 			AccessToken:  *accessToken,
 		}
@@ -173,7 +177,7 @@ func MakeRefreshEndpoints(u auth.AuthenService) endpoint.Endpoint {
 
 func MakeGetProfileEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		//get request param in a string
+		// get request param in a string
 		email := request.(string)
 		data, err := u.GetProfile(ctx, email)
 		return UserProfileResponse{
@@ -185,7 +189,7 @@ func MakeGetProfileEndpoints(u account.UserService) endpoint.Endpoint {
 
 func MakeLogoutEndpoints(u auth.AuthenService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		//get request param in a string
+		// get request param in a string
 		token := request.(LogoutRequest)
 		err = u.LogoutToken(ctx, token.Username, token.Token)
 		if err != nil {
@@ -222,10 +226,10 @@ func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, e
 	if tokenString == "" {
 		return nil, errors.New("token is required")
 	}
-	//userName, err := auth.GetSubjectFromToken(tokenString)
-	//if err != nil {
+	// userName, err := auth.GetSubjectFromToken(tokenString)
+	// if err != nil {
 	//	return nil, err
-	//}
+	// }
 	tokenString = tokenString[len("Bearer "):]
 	emailRP := r.URL.Query().Get("email")
 	return emailRP, nil
@@ -236,25 +240,25 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 	if tokenString == "" {
 		return nil, errors.New("token is required")
 	}
-	//userName, err := auth.GetSubjectFromToken(tokenString)
-	//if err != nil {
+	// userName, err := auth.GetSubjectFromToken(tokenString)
+	// if err != nil {
 	//	return nil, err
-	//}
+	// }
 	tokenString = tokenString[len("Bearer "):]
 	username := middleware.GetSessionHandler(r)
-	//err = auth.VerifyRefreshToken(tokenString)
-	//if err != nil {
+	// err = auth.VerifyRefreshToken(tokenString)
+	// if err != nil {
 	//	return nil, err
-	//}
-	//collectionPostgres, err := database.ConnectPostgres()
-	//if err != nil {
+	// }
+	// collectionPostgres, err := database.ConnectPostgres()
+	// if err != nil {
 	//	return nil, err
-	//}
-	//var result entity.Account
-	//err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
-	//if err != nil {
+	// }
+	// var result entity.Account
+	// err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
+	// if err != nil {
 	//	return nil, err
-	//}
+	// }
 
 	return LogoutRequest{
 		Token:    tokenString,
@@ -297,7 +301,7 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //		}
 //		return request, nil
 //	}
-//func DecodeLogoutRequest(_ context.Context, r *http.Request) (interface{}, error) {
+// func DecodeLogoutRequest(_ context.Context, r *http.Request) (interface{}, error) {
 //	tokenString := r.Header.Get("Authorization")
 //	if tokenString == "" {
 //		return nil, errors.New("token is required")
@@ -322,24 +326,24 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //	}
 //
 //	return tokenString, nil
-//}
+// }
 
-//func HandleMain(w http.ResponseWriter, request *http.Request) {
+// func HandleMain(w http.ResponseWriter, request *http.Request) {
 //	var htmlIndex = `<html>
-//<body>
+// <body>
 //	<a href="/login">Google Log In</a>
-//</body>
-//</html>`
+// </body>
+// </html>`
 //
 //	fmt.Fprintf(w, htmlIndex)
-//}
+// }
 //
-//func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
+// func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 //	url := googleOauthConfig.AuthCodeURL(oauthStateString)
 //	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-//}
+// }
 //
-//func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
+// func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 //	w.Header().Set("Content-Type", "application/json")
 //
 //	token, email, username, err := getUserInfo(r.FormValue("state"), r.FormValue("code"))
@@ -398,8 +402,8 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //	fmt.Println(accessToken)
 //
 //	fmt.Fprintf(w, "Token: "+accessToken)
-//}
-//func GenerateToken(username string) (string, error) {
+// }
+// func GenerateToken(username string) (string, error) {
 //	token, err := auth.CreateAccessToken(username)
 //	if err != nil {
 //		fmt.Println("errCreate")
@@ -407,8 +411,8 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //		return "", err
 //	}
 //	return token, nil
-//}
-//func getUserInfo(state string, code string) (*string, *string, *string, error) {
+// }
+// func getUserInfo(state string, code string) (*string, *string, *string, error) {
 //	if state != oauthStateString {
 //		return nil, nil, nil, fmt.Errorf("invalid oauth state")
 //	}
@@ -441,4 +445,4 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //	fmt.Println("username: ", username)
 //
 //	return &token.AccessToken, &email, &username, nil
-//}
+// }

@@ -1,16 +1,18 @@
 package transport
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/api"
 	"DoAn/pkg/previewimage/middleware"
 	"DoAn/pkg/previewimage/service"
-	"context"
-	"encoding/json"
-	"fmt"
+
 	"github.com/go-kit/kit/endpoint"
-	"net/http"
-	"strconv"
 )
 
 type (
@@ -109,13 +111,12 @@ func DecodeUploadImagesRequest(_ context.Context, r *http.Request) (interface{},
 	userId := middleware.GetSessionHandler(r)
 	fmt.Printf("userId: %v\n", userId)
 
-	accountStr := r.FormValue("account_id")
-	accountValue, ok := strconv.Atoi(accountStr)
+	userIdValue, ok := strconv.Atoi(userId)
 	if ok != nil {
 		fmt.Println("Error Retrieving account_id")
 		return nil, ok
 	}
-	req.AccountId = accountValue
+	req.AccountId = userIdValue
 	return req, err
 }
 func DecodeCreatePreviewImageRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -132,13 +133,6 @@ func DecodeCreatePreviewImageRequest(_ context.Context, r *http.Request) (interf
 	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	req.Url = file
-	accountStr := r.FormValue("account_id")
-	accountValue, ok := strconv.Atoi(accountStr)
-	if ok != nil {
-		fmt.Println("Error Retrieving account_id")
-		return nil, ok
-	}
-	req.AccountId = accountValue
 	return req, err
 }
 

@@ -9,9 +9,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/go-kit/kit/log"
 	"strconv"
 	"time"
+
+	"github.com/go-kit/kit/log"
 )
 
 type CriteriaStruct struct {

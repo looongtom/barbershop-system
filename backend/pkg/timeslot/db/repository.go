@@ -6,8 +6,9 @@ import (
 	"DoAn/pkg/timeslot/entity"
 	"context"
 	"database/sql"
-	"github.com/go-kit/kit/log"
 	"time"
+
+	"github.com/go-kit/kit/log"
 )
 
 type repo struct {

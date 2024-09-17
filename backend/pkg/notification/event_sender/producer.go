@@ -4,8 +4,9 @@ import (
 	"DoAn/pkg/booking/api"
 	"encoding/json"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"log"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 const (

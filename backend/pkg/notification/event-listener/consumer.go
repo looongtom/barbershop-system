@@ -6,11 +6,12 @@ import (
 	"DoAn/pkg/booking/pb"
 	"encoding/json"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/joho/godotenv"
 	logV "log"
 	"os"
 	"os/signal"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/joho/godotenv"
 )
 
 const (

@@ -1,23 +1,31 @@
 package main
 
 import (
+	"fmt"
+	logV "log"
+	"net/http"
+	"os"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+
 	"DoAn/pkg/previewimage"
 	"DoAn/pkg/previewimage/database"
 	repository "DoAn/pkg/previewimage/db"
 	"DoAn/pkg/previewimage/middleware"
 	"DoAn/pkg/previewimage/service"
 	"DoAn/pkg/previewimage/transport"
-	"fmt"
+
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	logV "log"
-	"net/http"
-	"os"
 
 	"github.com/go-kit/kit/log"
+)
+
+const (
+	kafkaBroker = "localhost:9092"
 )
 
 func main() {
@@ -43,6 +51,13 @@ func main() {
 	}
 	defer connGrpcAccount.Close()
 
+	kafkaBroker, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+	if err != nil {
+		fmt.Printf("Failed to create producer: %s\n", err)
+		return
+	}
+	defer kafkaBroker.Close()
+
 	var svc previewimage.PreviewImageService
 	svc = service.PreviewImageService{}
 	{
@@ -51,7 +66,7 @@ func main() {
 			logV.Fatalf("Error loading repository, %v", err)
 		}
 
-		svc = service.NewService(repo, logger, connGrpcAccount)
+		svc = service.NewService(repo, logger, connGrpcAccount, kafkaBroker)
 	}
 
 	CreatePreviewImageHandler := httptransport.NewServer(

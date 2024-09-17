@@ -10,10 +10,11 @@ import (
 	"DoAn/pkg/timeslot/transport"
 	"context"
 	"fmt"
-	"github.com/joho/godotenv"
 	logV "log"
 	"net"
 	"os"
+
+	"github.com/joho/godotenv"
 
 	"github.com/go-kit/kit/log"
 	"google.golang.org/grpc"

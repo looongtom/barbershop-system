@@ -1,27 +1,26 @@
 package service
 
 import (
-	"DoAn/pkg/booking"
-	"DoAn/pkg/booking/api"
-	kafka2 "DoAn/pkg/booking/kafka"
-	"DoAn/pkg/booking/pb"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"strconv"
 	"time"
+
+	"DoAn/pkg/booking"
+	"DoAn/pkg/booking/api"
+	kafka2 "DoAn/pkg/booking/kafka"
+	"DoAn/pkg/booking/pb"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/go-kit/kit/log"
 	"google.golang.org/grpc"
 )
 
 const (
-	groupID      = "reply-group"
-	replyTopic   = "reply"
 	bookingTopic = "booking"
-	kafkaBroker  = "localhost:9092"
 )
 
 type BookingStruct struct {
@@ -77,7 +76,7 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 		return nil, err
 	}
 
-	//stupid receiving kafka response
+	// stupid receiving kafka response
 	/*
 		fmt.Println("Message produced successfully!")
 
@@ -139,7 +138,7 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 	return nil, nil
 }
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
-	//call grpc api
+	// call grpc api
 	client := pb.NewUserServiceClient(b.connAccount)
 	clientTimeslot := pb.NewTimeslotServiceClient(b.connTimeslot)
 	clientService := pb.NewServicingServiceClient(b.connService)

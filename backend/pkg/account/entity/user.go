@@ -1,9 +1,10 @@
 package entity
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"html"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
