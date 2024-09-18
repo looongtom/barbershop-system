@@ -40,6 +40,7 @@ func MakeCreatePreviewImageEndpoints(svc previewimage.PreviewImageService) endpo
 func MakeUploadImagesEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.UpdateImageRequest)
+		//print request file name
 		resp, err := svc.UploadImages(ctx, req)
 		return Response{
 			Message: "success",

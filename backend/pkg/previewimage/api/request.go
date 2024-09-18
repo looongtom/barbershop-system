@@ -25,3 +25,10 @@ type KafkaPreviewImageRequest struct {
 	ShapeImg  string `json:"shape_img"`
 	ColorImg  string `json:"color_img"`
 }
+
+type HairFastResult struct {
+	SelfImgCloud      string `json:"self_img_cloud"`
+	ShapeImgCloud     string `json:"shape_img_cloud"`
+	ColorImgCloud     string `json:"color_img_cloud"`
+	GeneratedImgCloud string `json:"generated_img_cloud"`
+}

@@ -20,6 +20,4 @@ go run ./pkg/previewimage/cmd/main.go
 
 go run ./pkg/account/cmd/main.go
 
-go run ./pkg/account/cmd/main.go
-
-go run .pkg/notification/previewimage-listener/consumer_previewimage.go
+go run ./pkg/notification/previewimage-listener/consumer_previewimage.go

@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/joho/godotenv"
 	"io"
+	"log"
 	logV "log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
-
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/joho/godotenv"
 
 	"DoAn/pkg/previewimage/api"
 )
@@ -22,6 +22,8 @@ const (
 	groupPreviewImageID     = "preview_img-group"
 	topicPreviewImage       = "preview_img"
 	kafkaBrokerPreviewImage = "localhost:9092"
+
+	hairfastTopic = "hairfast"
 )
 
 func main() {
@@ -90,7 +92,21 @@ func main() {
 				}
 				fmt.Printf("Received booking: %+v\n", previewImg)
 				// call another api
-				CallAnotherAPI(previewImg)
+				//CallAnotherAPI(previewImg)
+
+				// Produce the message to the Kafka topic
+				serializedPreviewImage, err := json.Marshal(previewImg)
+				if err != nil {
+					log.Fatalf("Failed to serialize booking request: %s\n", err)
+					return
+				}
+
+				err = produceMessage(kafkaBrokerServer, hairfastTopic, serializedPreviewImage)
+				if err != nil {
+					log.Fatalf("Failed to produce message: %s\n", err)
+				}
+				fmt.Println("Message produced successfully!")
+
 			case kafka.Error:
 				// Handle Kafka errors
 				fmt.Printf("Error: %v\n", e)
@@ -99,45 +115,95 @@ func main() {
 	}
 }
 
+func produceMessage(p *kafka.Producer, topic string, message []byte) error {
+	deliveryChan := make(chan kafka.Event)
+	err := p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          message,
+	}, deliveryChan)
+	if err != nil {
+		return fmt.Errorf("failed to produce message: %w", err)
+	}
+
+	e := <-deliveryChan
+	m := e.(*kafka.Message)
+	if m.TopicPartition.Error != nil {
+		return fmt.Errorf("delivery failed: %w", m.TopicPartition.Error)
+	}
+	fmt.Printf("Produced message to topic %s: %s\n", *m.TopicPartition.Topic, string(m.Value))
+	return nil
+
+}
+
+func downloadAndCreateFormFile(writer *multipart.Writer, fieldName, imageURL string) error {
+	resp, err := http.Get(imageURL)
+	if err != nil {
+		fmt.Println("1")
+		fmt.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("failed to download image: %s\n", resp.Status)
+		return err
+	}
+	part, err := writer.CreateFormFile(fieldName, fieldName)
+	if err != nil {
+		fmt.Println("2")
+		fmt.Println(err)
+		return err
+	}
+	_, err = io.Copy(part, resp.Body)
+	if err != nil {
+		fmt.Println("3")
+		fmt.Println(err)
+		return err
+	}
+	return nil
+}
+
 func CallAnotherAPI(previewImg api.KafkaPreviewImageRequest) {
-	url := "http://192.168.1.3:5000/upload-images"
+	url := "http://localhost:5000/upload-images"
 	method := "POST"
 
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 
 	var wg sync.WaitGroup
-
-	downloadAndCreateFormFile := func(fieldName, imageURL string) {
-		defer wg.Done()
-		resp, err := http.Get(imageURL)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			fmt.Printf("failed to download image: %s\n", resp.Status)
-			return
-		}
-		part, err := writer.CreateFormFile(fieldName, fieldName)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		_, err = io.Copy(part, resp.Body)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
+	errChan := make(chan error, 3)
 
 	wg.Add(3)
-	go downloadAndCreateFormFile("selfImg", previewImg.SelfImg)
-	go downloadAndCreateFormFile("shapeImg", previewImg.ShapeImg)
-	go downloadAndCreateFormFile("colorImg", previewImg.ColorImg)
+
+	go func() {
+		defer wg.Done()
+		if err := downloadAndCreateFormFile(writer, "selfImg", previewImg.SelfImg); err != nil {
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := downloadAndCreateFormFile(writer, "shapeImg", previewImg.ShapeImg); err != nil {
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := downloadAndCreateFormFile(writer, "colorImg", previewImg.ColorImg); err != nil {
+			errChan <- err
+		}
+	}()
 
 	wg.Wait()
+	close(errChan)
+
+	if len(errChan) > 0 {
+		for err := range errChan {
+			fmt.Println(err)
+		}
+		return
+	}
 
 	err := writer.Close()
 	if err != nil {

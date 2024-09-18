@@ -6,6 +6,7 @@ import (
 	logV "log"
 	"mime/multipart"
 	"os"
+	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 
@@ -16,7 +17,7 @@ import (
 )
 
 func UploadImageToCloud(file multipart.File) (string, error) {
-	er := godotenv.Load("account.env")
+	er := godotenv.Load("previewimage.env")
 	if er != nil {
 		logV.Fatalln("Error getting env, %v", er)
 	}
@@ -35,10 +36,11 @@ func UploadImageToCloud(file multipart.File) (string, error) {
 	//
 	// Upload can be greatly customized by specifying uploader.UploadParams,
 	// in this case we set the Public ID of the uploaded asset to "logo".
+	uniqueTs := time.Now().Format("2006-01-02T15:04:05")
 	uploadResult, err := cld.Upload.Upload(
 		ctx,
 		file,
-		uploader.UploadParams{PublicID: "models",
+		uploader.UploadParams{PublicID: uniqueTs,
 			UniqueFilename: api.Bool(false),
 			Overwrite:      api.Bool(true)})
 	if err != nil {
