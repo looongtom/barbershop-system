@@ -5,11 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
+	"log"
 	logV "log"
+	"net/http"
 	"os"
 	"os/signal"
 )
+
+const websocketURL = "ws://localhost:8080/trigger_hairfast" // Assuming WebSocket server is on the same machine
 
 const (
 	groupPreviewImageID     = "my_consumer_group"
@@ -18,6 +23,29 @@ const (
 
 	hairfastResultTopic = "result_hairfast"
 )
+
+func sendToWebSocket(result api.HairFastResult) {
+	resultJSON, err := json.Marshal(result)
+	if err != nil {
+		log.Printf("Failed to marshal HairFastResult to JSON: %v", err)
+		return
+	}
+	// Create WebSocket client connection
+	conn, _, err := websocket.DefaultDialer.Dial(websocketURL, http.Header{})
+	if err != nil {
+		log.Printf("Failed to connect to WebSocket server: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	// Send the data
+	err = conn.WriteMessage(websocket.TextMessage, resultJSON)
+	if err != nil {
+		log.Printf("Failed to send message to WebSocket server: %v", err)
+	} else {
+		log.Printf("Successfully sent message to WebSocket server: %s", resultJSON)
+	}
+}
 
 func main() {
 
@@ -86,6 +114,7 @@ func main() {
 				fmt.Printf("Received booking: %+v\n", hairfastResult)
 				// call another api
 				//CallAnotherAPI(previewImg)
+				sendToWebSocket(hairfastResult)
 
 			case kafka.Error:
 				// Handle Kafka errors
