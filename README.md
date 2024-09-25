@@ -18,8 +18,6 @@ go run ./pkg/criteria/cmd/main.go
 
 go run ./pkg/previewimage/cmd/main.go
 
-go run ./pkg/account/cmd/main.go
-
 go run ./pkg/notification/previewimage-listener/consumer_previewimage.go
 
 go run ./pkg/result_preview_ws/server_ws.go
