@@ -78,6 +78,12 @@ func main() {
 	if err != nil {
 		logV.Fatalf("Error getting env, %v", err)
 	}
+
+	err = account.CreateTable(*collectionPostgres)
+	if err != nil {
+		logV.Fatalf("Error creating table: %v", err)
+	}
+
 	r := mux.NewRouter()
 
 	var authenSvc auth.AuthenService
@@ -125,10 +131,18 @@ func main() {
 		transport.DecodeEmptyRequest,
 		transport.EncodeResponse)
 
+	GetListBarberHandler := httptransport.NewServer(
+		transport.MakeGetListBarberEndpoints(svc),
+		transport.DecodeEmpty,
+		transport.EncodeResponse)
+
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/auth/register", RegisterUserHandler).Methods("POST")
 	r.Handle("/auth/login", LoginHandler).Methods("POST")
+
+	r.Handle("/barber/get-list", GetListBarberHandler).Methods("GET")
+
 	r.Handle("/auth/refresh", middleware.JWTMiddlewareRefreshToken(RefreshHandler, authenSvc)).Methods("GET")
 	r.Handle("/auth/profile", middleware.JWTMiddleware(GetProfileHandler, authenSvc)).Methods("GET")
 	r.Handle("/auth/logout", middleware.JWTMiddleware(LogoutHandler, authenSvc)).Methods("POST")

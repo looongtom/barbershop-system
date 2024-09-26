@@ -82,31 +82,10 @@ func (r repo) Login(ctx context.Context, user entity.Account) (*int, error) {
 }
 
 func (r repo) Register(ctx context.Context, user entity.Account) error {
-	createTable := `
-		CREATE TABLE IF NOT EXISTS account (
-			id SERIAL PRIMARY KEY,
-            username VARCHAR(255) NOT NULL ,
-            email VARCHAR(255) NOT NULL,
-            password VARCHAR(255) NOT NULL,
-		    role int NOT NULL ,
-		    phone_number VARCHAR(255) NOT NULL,
-			full_name VARCHAR(255) NOT NULL,
-			about VARCHAR(255) NOT NULL,
-			avatar VARCHAR(255) NOT NULL,
-			created_at BIGINT NOT NULL,
-			updated_at BIGINT NOT NULL
-		);
-	`
-	_, err := r.db.Exec(createTable)
-	if err != nil {
-		r.logger.Log(fmt.Sprintf("error while creating table: %v", err))
-		return err
-	}
 	var result entity.Account
-	errFindUsername := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1", user.Username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
-	errFindEmail := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE email=$1", user.Email).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
+	errFind := r.db.QueryRow("SELECT id,username,email,password,role FROM account WHERE username=$1 OR email=$2 ", user.Username, user.Email).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 
-	if errFindUsername == nil || errFindEmail == nil {
+	if errFind == nil {
 		return errors.New("username or email is already exist")
 	}
 	password, err := entity.Hash(user.Password)
@@ -127,8 +106,8 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
 		CreatedAt:   time.Now().Unix(),
 		UpdatedAt:   time.Now().Unix(),
 	}
-	_, err = r.db.Exec("INSERT INTO account (username, email, password,role,phone_number,full_name,about,avatar,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10)",
-		newUser.Username, newUser.Email, newUser.Password, newUser.Role, newUser.PhoneNumber, newUser.FullName, newUser.About, newUser.Avatar, newUser.CreatedAt, newUser.UpdatedAt)
+	_, err = r.db.Exec("INSERT INTO account (username, email, password,role,phone_number,full_name,about,avatar,dob,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10,$11)",
+		newUser.Username, newUser.Email, newUser.Password, newUser.Role, newUser.PhoneNumber, newUser.FullName, newUser.About, newUser.Avatar, newUser.Dob, newUser.CreatedAt, newUser.UpdatedAt)
 	if err != nil {
 		r.logger.Log(fmt.Sprintf("error while inserting data: %v", err))
 		return err
@@ -154,6 +133,23 @@ func (r repo) Register(ctx context.Context, user entity.Account) error {
 //	}
 //	return refreshToken, nil
 //}
+
+func (r repo) GetAllUserByRole(ctx context.Context, role int) ([]entity.Account, error) {
+	var result []entity.Account
+	rows, err := r.db.Query("SELECT id,username,email,role,phone_number,full_name,about,avatar,created_at,updated_at FROM account WHERE role=$1", role)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var user entity.Account
+		err = rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role, &user.PhoneNumber, &user.FullName, &user.About, &user.Avatar, &user.CreatedAt, &user.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, user)
+	}
+	return result, nil
+}
 
 func (r repo) CheckExistedBarber(ctx context.Context, id int) (string, error) {
 	query := `

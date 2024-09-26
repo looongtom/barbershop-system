@@ -57,10 +57,10 @@ func main() {
 
 	var result api.HairFastResult
 	result = api.HairFastResult{
-		"1",
-		"2",
-		"3",
-		"4",
+		"https://res.cloudinary.com/dsjuckdxu/image/upload/v1727172822/2024-09-24T17:13:39.jpg",
+		"https://res.cloudinary.com/dsjuckdxu/image/upload/v1727172823/2024-09-24T17:13:42.jpg",
+		"https://res.cloudinary.com/dsjuckdxu/image/upload/v1727172824/2024-09-24T17:13:43.jpg",
+		"https://res.cloudinary.com/dsjuckdxu/image/upload/v1727172979/ddr6wz2wffqcvz08eoqt.png",
 	}
 	resultJSON, err := json.Marshal(result)
 	if err != nil {

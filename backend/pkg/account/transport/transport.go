@@ -133,6 +133,17 @@ func MakeRegisterUserEndpoints(u account.UserService) endpoint.Endpoint {
 	}
 }
 
+func MakeGetListBarberEndpoints(u account.UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		data, err := u.GetAllBarber(ctx)
+		return Response{
+			Message: "success",
+			Status:  200,
+			Data:    data,
+		}, err
+	}
+}
+
 //	func MakeChangePassFirstTimeEndpoints(u account.UserService) endpoint.Endpoint {
 //		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 //			req := request.(ChangePassFirstTimeRequest)
@@ -219,6 +230,10 @@ func DecodeRegisterUserRequest(_ context.Context, r *http.Request) (interface{},
 		return nil, errors.New("email is invalid")
 	}
 	return request, nil
+}
+
+func DecodeEmpty(_ context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
 }
 
 func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, error) {
