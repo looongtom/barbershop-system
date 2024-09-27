@@ -2,6 +2,7 @@ package db
 
 import (
 	"DoAn/pkg/servicing"
+	"DoAn/pkg/servicing/api"
 	"DoAn/pkg/servicing/entity"
 	"context"
 	"database/sql"
@@ -57,6 +58,25 @@ func (r repo) GetListCategory(ctx context.Context) ([]entity.Category, error) {
 		listCate = append(listCate, cate)
 	}
 	return listCate, nil
+}
+
+func (r repo) GetListServiceAndCategory(ctx context.Context) ([]api.GetListServiceAndCategoryResponse, error) {
+	var list []api.GetListServiceAndCategoryResponse
+	rows, err := r.db.Query("SELECT c.id AS category_id, c.name AS category_name, s.id AS servicing_id, s.name AS servicing_name,s.price,s.description,s.url FROM category c JOIN servicing s ON c.id = s.category_id;")
+	if err != nil {
+		r.logger.Log("error while fetching data")
+		return nil, err
+	}
+	for rows.Next() {
+		var servicing api.GetListServiceAndCategoryResponse
+		err := rows.Scan(&servicing.CategoryId, &servicing.CategoryName, &servicing.ServiceId, &servicing.ServiceName, &servicing.Price, &servicing.Description, &servicing.Url)
+		if err != nil {
+			r.logger.Log("error while fetching data")
+			return nil, err
+		}
+		list = append(list, servicing)
+	}
+	return list, nil
 }
 
 func (r repo) GetListService(ctx context.Context) ([]entity.Servicing, error) {

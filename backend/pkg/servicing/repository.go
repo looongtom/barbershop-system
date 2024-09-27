@@ -1,6 +1,7 @@
 package servicing
 
 import (
+	"DoAn/pkg/servicing/api"
 	"DoAn/pkg/servicing/entity"
 	"context"
 )
@@ -15,5 +16,6 @@ type ServicingRepository interface {
 	GetCategory(ctx context.Context, id string) (*entity.Servicing, error)
 	GetListCategory(ctx context.Context) ([]entity.Category, error)
 	GetListService(ctx context.Context) ([]entity.Servicing, error)
+	GetListServiceAndCategory(ctx context.Context) ([]api.GetListServiceAndCategoryResponse, error)
 	//GetListServiceByBookingId(ctx context.Context, bookingId int) ([]entity.Servicing, error)
 }

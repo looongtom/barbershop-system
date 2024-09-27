@@ -31,6 +31,32 @@ func (s ServicingStruct) GetServicing(ctx context.Context, id string) (interface
 	return resp, nil
 }
 
+func (s ServicingStruct) GetListServicingAndCategory(ctx context.Context) (interface{}, error) {
+	resp, err := s.repository.GetListServiceAndCategory(ctx)
+	serviceMapResp := make(map[string]interface{})
+
+	for _, service := range resp {
+		categoryName := service.CategoryName
+		if _, exists := serviceMapResp[categoryName]; !exists {
+			serviceMapResp[categoryName] = []entity.Servicing{}
+		}
+		serviceMapResp[categoryName] = append(serviceMapResp[categoryName].([]entity.Servicing), entity.Servicing{
+			ID:          service.ServiceId,
+			Name:        service.ServiceName,
+			Price:       service.Price,
+			Description: service.Description,
+			Url:         service.Url,
+			CategoryID:  service.CategoryId,
+		})
+	}
+
+	if err != nil {
+		errMsg := err.Error()
+		return errMsg, err
+	}
+	return serviceMapResp, nil
+
+}
 func (s ServicingStruct) GetListServicing(ctx context.Context) (interface{}, error) {
 	resp, err := s.repository.GetListService(ctx)
 	if err != nil {

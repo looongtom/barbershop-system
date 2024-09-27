@@ -13,6 +13,7 @@ type ServicingService interface {
 	DeleteServicing(ctx context.Context, id string) (interface{}, error)
 	GetListServicingByCategory(ctx context.Context, categoryId int) (interface{}, error)
 	//GetListServicingByBookingId(ctx context.Context, bookingId int) (interface{}, error)
+	GetListServicingAndCategory(ctx context.Context) (interface{}, error)
 
 	GetCategory(ctx context.Context, id string) (interface{}, error)
 	GetListCategory(ctx context.Context) (interface{}, error)

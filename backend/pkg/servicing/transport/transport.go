@@ -69,6 +69,17 @@ func MakeGetListServiceEndpoints(svc servicing.ServicingService) endpoint.Endpoi
 		}, err
 	}
 }
+
+func MakeGetListServiceAndCategoryEndpoints(svc servicing.ServicingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		resp, err := svc.GetListServicingAndCategory(ctx)
+		return Response{
+			Message: "success",
+			Data:    resp,
+		}, err
+	}
+}
+
 func MakeCreateServiceEndpoints(svc servicing.ServicingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(CreateServiceRequest)

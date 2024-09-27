@@ -9,3 +9,20 @@ type GetServiceByIdResponse struct {
 	CategoryID   int    `json:"category_id"`
 	CategoryName string `json:"category_name"`
 }
+
+type GetListServiceAndCategoryResponse struct {
+	CategoryId   int    `json:"category_id"`
+	CategoryName string `json:"category_name"`
+	ServiceId    int    `json:"servicing_id"`
+	ServiceName  string `json:"servicing_name"`
+	Price        int    `json:"price"`
+	Description  string `json:"description"`
+	Url          string `json:"url"`
+}
+
+type ServiceResponse struct {
+	ServiceName string `json:"servicing_name"`
+	Price       int    `json:"price"`
+	Description string `json:"description"`
+	Url         string `json:"url"`
+}

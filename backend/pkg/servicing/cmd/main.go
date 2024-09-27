@@ -101,6 +101,12 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	GetListServiceAndCategoryHandler := httptransport.NewServer(
+		transport.MakeGetListServiceAndCategoryEndpoints(svc),
+		transport.DecodeEmptyRequest,
+		transport.EncodeResponse,
+	)
+
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/servicing/category/create", middleware.JWTMiddlewareAdmin(CreateCategoryHandler, connGrpcAccount)).Methods("POST")
@@ -110,6 +116,8 @@ func main() {
 
 	r.Handle("/servicing/category/get-list", middleware.JWTMiddleware(GetListCategoryHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/servicing/service/get-list", middleware.JWTMiddleware(GetListServiceHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/servicing/service/get-list-v2", middleware.JWTMiddleware(GetListServiceAndCategoryHandler, connGrpcAccount)).Methods("GET")
+
 	r.Handle("/servicing/category/get", middleware.JWTMiddleware(GetCategoryHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/servicing/service/get", middleware.JWTMiddleware(GetServiceHandler, connGrpcAccount)).Methods("GET")
 
