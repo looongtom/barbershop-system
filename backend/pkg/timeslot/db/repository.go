@@ -52,14 +52,12 @@ func (r repo) CreateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTim
 func (r repo) GetListTimeSlotByBarberId(ctx context.Context, findTimeSlot api.FindTimeslotRequest) ([]entity.Timeslot, error) {
 	query := `
 		SELECT id,start_time,booked_date,status,barber_id,created_at,updated_at FROM timeslot WHERE barber_id = $1
-		or booked_date = $2
-		or start_time = $3
-		or status = $4
+		and booked_date = $2
+		or start_time = $3;
 `
 	rows, err := r.db.Query(query, findTimeSlot.BarberId,
 		findTimeSlot.BookedDate,
-		findTimeSlot.StartTime,
-		findTimeSlot.Status)
+		findTimeSlot.StartTime)
 
 	if err != nil {
 		r.logger.Log("error while querying")

@@ -90,7 +90,7 @@ func main() {
 					fmt.Printf("Failed to deserialize message: %s\n", err)
 					continue
 				}
-				fmt.Printf("Received booking: %+v\n", previewImg)
+				fmt.Printf("Received previewImg: %+v\n", previewImg)
 				// call another api
 				//CallAnotherAPI(previewImg)
 

@@ -28,6 +28,12 @@ type (
 func MakeGetTimeSlotEndpoints(svc timeslot.TimeSlotService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.FindTimeslotRequest)
+		if req.BarberId == 0 {
+			return nil, errors.New("missing barber id")
+		}
+		if req.BookedDate == "" {
+			return nil, errors.New("missing booked date")
+		}
 		resp, err := svc.GetListTimeSlotByBarberId(ctx, req)
 		return Response{
 			Message: "success",

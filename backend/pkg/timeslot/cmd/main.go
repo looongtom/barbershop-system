@@ -84,7 +84,7 @@ func main() {
 
 	r.Handle("/timeslot/find", GetListTimeSlotByBarberIdHandler).Methods("POST")
 	r.Handle("/timeslot/create-or-update", middleware.JWTMiddlewareAdmin(CreateOrUpdateTimeslotHandler, connGrpcAccount)).Methods("POST")
-	r.Handle("/timeslot/create-by-list", middleware.JWTMiddlewareAdmin(CreateListTimeslotHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/timeslot/create-by-list", CreateListTimeslotHandler).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8003")
 	logger.Log("err", http.ListenAndServe(":8003", nil))
