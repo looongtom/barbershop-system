@@ -13,7 +13,6 @@ func DecodeFindExistTimeslot(_ context.Context, r interface{}) (interface{}, err
 		BarberId:   int(req.BarberId),
 		StartTime:  req.StartTime,
 		BookedDate: req.BookedDate,
-		Status:     req.Status,
 	}, nil
 }
 

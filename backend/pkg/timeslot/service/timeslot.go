@@ -142,7 +142,53 @@ func (t TimeSlotService) GetListTimeSlotByBarberId(ctx context.Context, findTime
 	if err != nil {
 		return nil, err
 	}
+	var listRes []entity.Timeslot
+	if res == nil {
+		listTimeSlot := createListTimeSlot(findTimeSlot.BarberId, findTimeSlot.BookedDate)
+		for _, timeslot := range listTimeSlot {
+			ok, err := t.repository.CheckAvailableTimeSlot(ctx, api.CheckExistedTimeslotRequest{
+				BarberId:   timeslot.BarberId,
+				StartTime:  timeslot.StartTime,
+				BookedDate: timeslot.BookedDate,
+			})
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				t.logger.Log(fmt.Sprintf("error %v while checking available timeslot %v \n", err, timeslot))
+				continue
+			}
+			if ok {
+				t.logger.Log(fmt.Sprintf("error timeslot already exist: %v \n", err, timeslot))
+				continue
+			}
+			res, err := t.repository.CreateTimeSlot(ctx, timeslot)
+			if err != nil {
+				return nil, err
+			} else {
+				listRes = append(listRes, res)
+			}
+		}
+		if len(listRes) == 0 {
+			return nil, errors.New("create timeslot failed")
+		}
+		res = listRes
+	}
 	return res, nil
+}
+
+func createListTimeSlot(barber int, bookedDate string) []api.CreateOrUpdateTimeslotRequest {
+	var listTimeSlot []api.CreateOrUpdateTimeslotRequest
+	//loop time from 09:00 to 17:30 with step 30 minutes
+	for i := 9; i < 18; i++ {
+		for j := 0; j < 60; j += 30 {
+			timeSlot := fmt.Sprintf("%02d:%02d", i, j)
+			listTimeSlot = append(listTimeSlot, api.CreateOrUpdateTimeslotRequest{
+				BarberId:   barber,
+				StartTime:  timeSlot,
+				BookedDate: bookedDate,
+				Status:     "Available",
+			})
+		}
+	}
+	return listTimeSlot
 }
 
 //func (t TimeSlotService) UpdateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTimeslotRequest) (interface{}, error) {

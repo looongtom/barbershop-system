@@ -23,6 +23,39 @@ func NewRepository(db *sql.DB, logger log.Logger) (timeslot.TimeslotRepository, 
 	}, nil
 }
 
+func (r repo) CreateListTimeSlot(ctx context.Context, timeslots []api.CreateOrUpdateTimeslotRequest) ([]entity.Timeslot, error) {
+	listNewTimeSlot := make([]entity.Timeslot, 0)
+	respTimeSlot := make([]entity.Timeslot, 0)
+	for _, timeslot := range timeslots {
+		listNewTimeSlot = append(listNewTimeSlot, entity.Timeslot{
+			StartTime:  timeslot.StartTime,
+			BookedDate: timeslot.BookedDate,
+			Status:     timeslot.Status,
+			BarberId:   timeslot.BarberId,
+			CreatedAt:  time.Now().Unix(),
+			UpdatedAt:  time.Now().Unix(),
+		})
+	}
+	query := `
+		INSERT INTO timeslot(start_time, booked_date, status, barber_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+	`
+	for _, newTimeSlot := range listNewTimeSlot {
+		err := r.db.QueryRow(query,
+			newTimeSlot.StartTime,
+			newTimeSlot.BookedDate,
+			newTimeSlot.Status,
+			newTimeSlot.BarberId,
+			newTimeSlot.CreatedAt,
+			newTimeSlot.UpdatedAt).Scan(&newTimeSlot.ID)
+		if err != nil {
+			r.logger.Log("error while inserting data")
+			return nil, err
+		}
+		respTimeSlot = append(respTimeSlot, newTimeSlot)
+	}
+	return respTimeSlot, nil
+}
+
 func (r repo) CreateTimeSlot(ctx context.Context, timeslot api.CreateOrUpdateTimeslotRequest) (entity.Timeslot, error) {
 	newTimeSlot := entity.Timeslot{
 		StartTime:  timeslot.StartTime,
