@@ -1,7 +1,7 @@
 package result
 
 import (
-	"DoAn/pkg/result/api"
+	"DoAn/api"
 	"context"
 )
 

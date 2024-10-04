@@ -9,12 +9,12 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"DoAn/pkg/previewimage"
-	"DoAn/pkg/previewimage/api"
-	"DoAn/pkg/previewimage/common"
-	"DoAn/pkg/previewimage/entity"
-	kafka2 "DoAn/pkg/previewimage/kafka"
-	"DoAn/pkg/previewimage/pb"
+	"DoAn"
+	"DoAn/api"
+	"DoAn/common"
+	"DoAn/entity"
+	kafka2 "DoAn/kafka"
+	"DoAn/pb"
 
 	"google.golang.org/grpc"
 

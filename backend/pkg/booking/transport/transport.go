@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/booking"
-	"DoAn/pkg/booking/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 	"encoding/json"
 	"net/http"

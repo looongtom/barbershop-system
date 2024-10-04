@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	"DoAn/pkg/account/api"
-	"DoAn/pkg/account/pb"
+	"DoAn/api"
+	"DoAn/pb"
 	"context"
 )
 

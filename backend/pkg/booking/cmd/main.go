@@ -1,12 +1,12 @@
 package main
 
 import (
-	"DoAn/pkg/booking"
-	"DoAn/pkg/booking/database"
-	repository "DoAn/pkg/booking/db"
-	"DoAn/pkg/booking/middleware"
-	"DoAn/pkg/booking/service"
-	"DoAn/pkg/booking/transport"
+	"DoAn"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/middleware"
+	"DoAn/service"
+	"DoAn/transport"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"google.golang.org/grpc"

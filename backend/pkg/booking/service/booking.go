@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"DoAn/pkg/booking"
-	"DoAn/pkg/booking/api"
-	kafka2 "DoAn/pkg/booking/kafka"
-	"DoAn/pkg/booking/pb"
+	"DoAn"
+	"DoAn/api"
+	kafka2 "DoAn/kafka"
+	"DoAn/pb"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 

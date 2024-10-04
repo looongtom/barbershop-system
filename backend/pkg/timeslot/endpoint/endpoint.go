@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	"DoAn/pkg/timeslot"
-	"DoAn/pkg/timeslot/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 
 	"github.com/go-kit/kit/endpoint"

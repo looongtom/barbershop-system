@@ -1,9 +1,9 @@
 package endpoint
 
 import (
-	"DoAn/pkg/account"
-	"DoAn/pkg/account/api"
-	"DoAn/pkg/account/auth"
+	"DoAn"
+	"DoAn/api"
+	"DoAn/auth"
 	"context"
 
 	"github.com/go-kit/kit/endpoint"

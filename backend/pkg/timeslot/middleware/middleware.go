@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"DoAn/pkg/previewimage/common"
-	"DoAn/pkg/timeslot/pb"
+	"DoAn/common"
+	"DoAn/pb"
 	"context"
 	"fmt"
 	"net/http"

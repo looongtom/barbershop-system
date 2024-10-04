@@ -1,8 +1,8 @@
 package db
 
 import (
-	"DoAn/pkg/previewimage"
-	"DoAn/pkg/previewimage/entity"
+	"DoAn"
+	"DoAn/entity"
 	"context"
 	"database/sql"
 

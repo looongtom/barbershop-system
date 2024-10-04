@@ -1,7 +1,7 @@
 package account
 
 import (
-	"DoAn/pkg/account/entity"
+	"DoAn/entity"
 	"context"
 )
 

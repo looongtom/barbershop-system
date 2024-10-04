@@ -1,7 +1,7 @@
 package main
 
 import (
-	"DoAn/pkg/previewimage/api"
+	"DoAn/api"
 	"encoding/json"
 	"fmt"
 	"log"

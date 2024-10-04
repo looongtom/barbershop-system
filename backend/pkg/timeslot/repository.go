@@ -1,8 +1,8 @@
 package timeslot
 
 import (
-	"DoAn/pkg/timeslot/api"
-	"DoAn/pkg/timeslot/entity"
+	"DoAn/api"
+	"DoAn/entity"
 	"context"
 )
 

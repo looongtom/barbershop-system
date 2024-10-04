@@ -1,12 +1,12 @@
 package main
 
 import (
-	"DoAn/pkg/criteria"
-	"DoAn/pkg/criteria/database"
-	repository "DoAn/pkg/criteria/db"
-	"DoAn/pkg/criteria/middleware"
-	"DoAn/pkg/criteria/service"
-	"DoAn/pkg/criteria/transport"
+	"DoAn"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/middleware"
+	"DoAn/service"
+	"DoAn/transport"
 	"fmt"
 	logV "log"
 	"net/http"

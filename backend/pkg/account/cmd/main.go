@@ -1,15 +1,16 @@
 package main
 
 import (
-	"DoAn/pkg/account"
-	"DoAn/pkg/account/auth"
-	repository2 "DoAn/pkg/account/auth/repository"
-	service2 "DoAn/pkg/account/auth/service"
-	"DoAn/pkg/account/database"
-	repository "DoAn/pkg/account/db"
-	"DoAn/pkg/account/middleware"
-	"DoAn/pkg/account/service"
-	"DoAn/pkg/account/transport"
+	account "DoAn"
+	"DoAn/auth"
+	repository2 "DoAn/auth/repository"
+	service2 "DoAn/auth/service"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/middleware"
+	"DoAn/service"
+	"DoAn/transport"
+
 	"context"
 	"fmt"
 	logV "log"

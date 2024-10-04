@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	"DoAn/pkg/booking"
-	"DoAn/pkg/booking/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 
 	"github.com/go-kit/kit/endpoint"

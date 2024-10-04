@@ -1,9 +1,9 @@
 package db
 
 import (
-	"DoAn/pkg/timeslot"
-	"DoAn/pkg/timeslot/api"
-	"DoAn/pkg/timeslot/entity"
+	"DoAn"
+	"DoAn/api"
+	"DoAn/entity"
 	"context"
 	"database/sql"
 	"time"

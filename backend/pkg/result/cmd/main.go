@@ -1,12 +1,12 @@
 package main
 
 import (
-	"DoAn/pkg/result"
-	"DoAn/pkg/result/database"
-	repository "DoAn/pkg/result/db"
-	"DoAn/pkg/result/middleware"
-	"DoAn/pkg/result/service"
-	"DoAn/pkg/result/transport"
+	"DoAn"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/middleware"
+	"DoAn/service"
+	"DoAn/transport"
 	"fmt"
 	logV "log"
 	"net/http"

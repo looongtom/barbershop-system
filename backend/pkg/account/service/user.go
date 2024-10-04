@@ -1,9 +1,9 @@
 package service
 
 import (
-	"DoAn/pkg/account"
-	"DoAn/pkg/account/auth"
-	"DoAn/pkg/account/entity"
+	"DoAn"
+	"DoAn/auth"
+	"DoAn/entity"
 	"context"
 	"errors"
 	"fmt"

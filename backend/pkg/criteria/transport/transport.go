@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/criteria"
-	"DoAn/pkg/criteria/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 	"encoding/json"
 	"fmt"

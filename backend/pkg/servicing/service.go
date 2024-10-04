@@ -1,7 +1,7 @@
 package servicing
 
 import (
-	"DoAn/pkg/servicing/entity"
+	"DoAn/entity"
 	"context"
 )
 

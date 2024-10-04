@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/booking/endpoint"
-	"DoAn/pkg/booking/pb"
+	"DoAn/endpoint"
+	"DoAn/pb"
 
 	"context"
 

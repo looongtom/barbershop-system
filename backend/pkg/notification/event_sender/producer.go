@@ -1,7 +1,7 @@
 package main
 
 import (
-	"DoAn/pkg/booking/api"
+	"DoAn/api"
 	"encoding/json"
 	"fmt"
 	"log"

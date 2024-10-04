@@ -1,9 +1,9 @@
 package db
 
 import (
-	"DoAn/pkg/result"
-	"DoAn/pkg/result/api"
-	"DoAn/pkg/result/entity"
+	"DoAn"
+	"DoAn/api"
+	"DoAn/entity"
 	"context"
 	"database/sql"
 

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"DoAn/pkg/servicing"
-	"DoAn/pkg/servicing/database"
-	repository "DoAn/pkg/servicing/db"
-	"DoAn/pkg/servicing/endpoint"
-	"DoAn/pkg/servicing/pb"
-	"DoAn/pkg/servicing/service"
-	"DoAn/pkg/servicing/transport"
+	"DoAn"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/endpoint"
+	"DoAn/pb"
+	"DoAn/service"
+	"DoAn/transport"
 	"fmt"
 	"net"
 

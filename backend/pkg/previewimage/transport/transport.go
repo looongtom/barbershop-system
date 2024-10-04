@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"DoAn/pkg/previewimage"
-	"DoAn/pkg/previewimage/api"
-	"DoAn/pkg/previewimage/middleware"
-	"DoAn/pkg/previewimage/service"
+	"DoAn"
+	"DoAn/api"
+	"DoAn/middleware"
+	"DoAn/service"
 
 	"github.com/go-kit/kit/endpoint"
 )

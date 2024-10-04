@@ -1,16 +1,16 @@
 package main
 
 import (
-	"DoAn/pkg/timeslot/database"
-	"DoAn/pkg/timeslot/middleware"
-	"DoAn/pkg/timeslot/transport"
+	"DoAn/database"
+	"DoAn/middleware"
+	"DoAn/transport"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"DoAn/pkg/timeslot"
-	repository "DoAn/pkg/timeslot/db"
-	"DoAn/pkg/timeslot/service"
+	"DoAn"
+	repository "DoAn/db"
+	"DoAn/service"
 	"fmt"
 	logV "log"
 	"net/http"

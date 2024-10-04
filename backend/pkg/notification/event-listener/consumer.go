@@ -1,9 +1,9 @@
 package main
 
 import (
-	"DoAn/pkg/booking/api"
-	kafka2 "DoAn/pkg/booking/kafka"
-	"DoAn/pkg/booking/pb"
+	"DoAn/api"
+	kafka2 "DoAn/kafka"
+	"DoAn/pb"
 	"encoding/json"
 	"fmt"
 	logV "log"

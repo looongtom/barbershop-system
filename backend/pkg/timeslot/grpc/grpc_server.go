@@ -1,13 +1,13 @@
 package main
 
 import (
-	"DoAn/pkg/timeslot"
-	"DoAn/pkg/timeslot/database"
-	repository "DoAn/pkg/timeslot/db"
-	"DoAn/pkg/timeslot/endpoint"
-	"DoAn/pkg/timeslot/pb"
-	"DoAn/pkg/timeslot/service"
-	"DoAn/pkg/timeslot/transport"
+	"DoAn"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/endpoint"
+	"DoAn/pb"
+	"DoAn/service"
+	"DoAn/transport"
 	"context"
 	"fmt"
 	logV "log"

@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"DoAn/pkg/account"
-	"DoAn/pkg/account/auth"
-	"DoAn/pkg/account/entity"
-	"DoAn/pkg/account/middleware"
+	"DoAn"
+	"DoAn/auth"
+	"DoAn/entity"
+	"DoAn/middleware"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/go-kit/kit/endpoint"

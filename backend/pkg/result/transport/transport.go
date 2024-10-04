@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/result"
-	"DoAn/pkg/result/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 	"encoding/json"
 	"errors"

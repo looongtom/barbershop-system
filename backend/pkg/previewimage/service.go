@@ -1,7 +1,7 @@
 package previewimage
 
 import (
-	"DoAn/pkg/previewimage/api"
+	"DoAn/api"
 	"context"
 )
 

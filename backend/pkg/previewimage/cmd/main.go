@@ -8,12 +8,12 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"DoAn/pkg/previewimage"
-	"DoAn/pkg/previewimage/database"
-	repository "DoAn/pkg/previewimage/db"
-	"DoAn/pkg/previewimage/middleware"
-	"DoAn/pkg/previewimage/service"
-	"DoAn/pkg/previewimage/transport"
+	"DoAn"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/middleware"
+	"DoAn/service"
+	"DoAn/transport"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"

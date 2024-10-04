@@ -1,8 +1,8 @@
 package db
 
 import (
-	"DoAn/pkg/account"
-	"DoAn/pkg/account/entity"
+	"DoAn"
+	"DoAn/entity"
 	"context"
 	"database/sql"
 	"errors"

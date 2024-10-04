@@ -15,7 +15,7 @@ import (
 	"os/signal"
 	"sync"
 
-	"DoAn/pkg/previewimage/api"
+	"DoAn/api"
 )
 
 const (

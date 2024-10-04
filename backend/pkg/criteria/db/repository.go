@@ -1,8 +1,8 @@
 package db
 
 import (
-	"DoAn/pkg/criteria"
-	entity2 "DoAn/pkg/criteria/entity"
+	"DoAn"
+	entity2 "DoAn/entity"
 	"DoAn/pkg/servicing/entity"
 	"context"
 	"database/sql"

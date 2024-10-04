@@ -1,9 +1,9 @@
 package transport
 
 import (
-	"DoAn/pkg/timeslot/endpoint"
-	"DoAn/pkg/timeslot/entity"
-	"DoAn/pkg/timeslot/pb"
+	"DoAn/endpoint"
+	"DoAn/entity"
+	"DoAn/pb"
 	"context"
 
 	gt "github.com/go-kit/kit/transport/grpc"

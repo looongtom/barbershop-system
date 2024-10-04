@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"DoAn/pkg/account/auth"
+	"DoAn/auth"
 	"context"
 	"fmt"
 	"net/http"

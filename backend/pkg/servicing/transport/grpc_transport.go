@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/servicing/endpoint"
-	"DoAn/pkg/servicing/pb"
+	"DoAn/endpoint"
+	"DoAn/pb"
 	"context"
 
 	gt "github.com/go-kit/kit/transport/grpc"

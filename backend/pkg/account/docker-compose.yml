@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://mongo:2717/user_management
+      - DB_USER=postgres
+      - DB_PASSWORD=tr1nhtu@n
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_SSLMODE=disable
+      - DB_NAME_ACCOUNT=barber_management
+      - DB_NAME_SERVICE=service_management
+      - DB_NAME_BOOKING=booking_management
+      - DB_NAME_TIMESLOT=timeslot_management
+      - DB_NAME_PREVIEW_IMAGE=preview_image_management
+      - DB_NAME_CRITERIA=criteria_management
+      - DB_NAME_RESULT=result_management
+      - REDIS_ADDRESS=redis:6379
+      - REDIS_PASSWORD=mysecretpassword
+      - SECRET_JWT=SuperSecureKey
+      - SECRET_REFRESH=SuperSecureRefreshKey
+      - SCHEDULED_TIME=01:22:00
+    depends_on:
+      - mongo
+      - redis
+      - postgres
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "2717:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tom
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "mysecretpassword"]
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tr1nhtu@n
+      POSTGRES_DB: barber_management

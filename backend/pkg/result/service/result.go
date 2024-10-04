@@ -1,8 +1,8 @@
 package service
 
 import (
-	"DoAn/pkg/result"
-	"DoAn/pkg/result/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 
 	"github.com/go-kit/kit/log"

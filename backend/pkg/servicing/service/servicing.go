@@ -1,8 +1,8 @@
 package service
 
 import (
-	"DoAn/pkg/servicing"
-	"DoAn/pkg/servicing/entity"
+	"DoAn"
+	"DoAn/entity"
 	"context"
 	"errors"
 	"strconv"

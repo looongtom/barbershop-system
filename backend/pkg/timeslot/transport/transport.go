@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/timeslot"
-	"DoAn/pkg/timeslot/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 	"encoding/json"
 	"errors"

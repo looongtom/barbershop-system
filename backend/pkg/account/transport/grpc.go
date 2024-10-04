@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"DoAn/pkg/account/endpoint"
-	"DoAn/pkg/account/pb"
+	"DoAn/endpoint"
+	"DoAn/pb"
 	"context"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"

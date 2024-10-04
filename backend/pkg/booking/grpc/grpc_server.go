@@ -1,14 +1,14 @@
 package main
 
 import (
-	"DoAn/pkg/booking"
-	"DoAn/pkg/booking/database"
-	"DoAn/pkg/booking/endpoint"
+	"DoAn"
+	"DoAn/database"
+	"DoAn/endpoint"
 
-	repository "DoAn/pkg/booking/db"
-	"DoAn/pkg/booking/pb"
-	"DoAn/pkg/booking/service"
-	"DoAn/pkg/booking/transport"
+	repository "DoAn/db"
+	"DoAn/pb"
+	"DoAn/service"
+	"DoAn/transport"
 	"context"
 	"fmt"
 	logV "log"

@@ -1,8 +1,8 @@
 package endpoint
 
 import (
-	"DoAn/pkg/servicing"
-	"DoAn/pkg/servicing/api"
+	"DoAn"
+	"DoAn/api"
 	"context"
 	"strconv"
 

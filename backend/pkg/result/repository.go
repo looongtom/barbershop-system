@@ -1,8 +1,8 @@
 package result
 
 import (
-	"DoAn/pkg/result/api"
-	"DoAn/pkg/result/entity"
+	"DoAn/api"
+	"DoAn/entity"
 	"context"
 )
 

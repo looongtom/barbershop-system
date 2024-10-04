@@ -1,7 +1,7 @@
 package criteria
 
 import (
-	"DoAn/pkg/criteria/api"
+	"DoAn/api"
 	"context"
 )
 

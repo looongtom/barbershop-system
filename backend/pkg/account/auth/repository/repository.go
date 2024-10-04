@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"DoAn/pkg/account/auth"
+	"DoAn/auth"
 	"context"
 	"errors"
 	"fmt"

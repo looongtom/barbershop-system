@@ -1,18 +1,18 @@
 package main
 
 import (
-	"DoAn/pkg/servicing/database"
-	repository "DoAn/pkg/servicing/db"
-	"DoAn/pkg/servicing/middleware"
-	"DoAn/pkg/servicing/service"
-	transport "DoAn/pkg/servicing/transport"
+	"DoAn/database"
+	repository "DoAn/db"
+	"DoAn/middleware"
+	"DoAn/service"
+	transport "DoAn/transport"
 	"fmt"
 	"net/http"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"DoAn/pkg/servicing"
+	"DoAn"
 	logV "log"
 	"os"
 

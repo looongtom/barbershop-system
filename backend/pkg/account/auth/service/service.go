@@ -1,7 +1,7 @@
 package service
 
 import (
-	"DoAn/pkg/account/auth"
+	"DoAn/auth"
 	"context"
 	"errors"
 	"fmt"
