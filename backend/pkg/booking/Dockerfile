@@ -13,24 +13,14 @@ RUN go mod download
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
-
-COPY ./pb/account.proto .
-
-RUN protoc --go_out=. --go_opt=paths=source_relative account.proto protoc --go-
-RUN protoc --go_out=. --go_opt=paths=source_relative account.proto protoc --go-grpc_out=require_unimplemented_servers=false:. --go-grpc_opt=paths=source_relative account.proto
-
 # Copy the account.env file to the Working Directory inside the container
-COPY account.env .
+COPY booking.env .
 
 # Build the Go app
 RUN go build -o main ./cmd/main.go
-RUN go build -o grpc_server ./grpc/grpc_server.go
 
 # Expose port 8000 to the outside world
-EXPOSE 8000
-EXPOSE 9090
-
-COPY start.sh .
+EXPOSE 8002
 
 # Command to run the executable
-CMD ["sh", "start.sh"]
+CMD ["./main"]
