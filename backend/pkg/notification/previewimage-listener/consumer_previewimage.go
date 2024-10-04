@@ -28,7 +28,7 @@ const (
 
 func main() {
 
-	err := godotenv.Load("criteria.env")
+	err := godotenv.Load("notification.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}
