@@ -79,6 +79,8 @@ func main() {
 	}
 	defer c.Close()
 
+	log.Println("Kafka listening on :9092 of topic " + hairfastResultTopic)
+
 	// Subscribe to the Kafka topic
 	err = c.SubscribeTopics([]string{hairfastResultTopic}, nil)
 	if err != nil {

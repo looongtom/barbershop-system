@@ -4,11 +4,14 @@ import (
 	"DoAn"
 	"DoAn/api"
 	"DoAn/entity"
+	"DoAn/mapper"
 	"context"
 	"database/sql"
+	"github.com/lib/pq"
 	"time"
 
 	"github.com/go-kit/kit/log"
+	_ "github.com/lib/pq"
 )
 
 type repo struct {
@@ -101,16 +104,26 @@ func (r repo) GetListIdServiceByBookingId(ctx context.Context, id int) ([]int, e
 	}
 	return listIds, nil
 }
-func (r repo) GetListBooking(ctx context.Context) ([]entity.Booking, error) {
-	var listBooking []entity.Booking
-	rows, err := r.db.Query("SELECT * FROM booking")
+func (r repo) GetListBooking(ctx context.Context) ([]mapper.BookingMapper, error) {
+	var listBooking []mapper.BookingMapper
+	rows, err := r.db.Query(`SELECT 
+			b.*, 
+			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
+		FROM 
+			booking b
+		LEFT JOIN 
+			booking_detail bd ON b.id = bd.booking_id
+		GROUP BY 
+			b.id;
+		`)
 	if err != nil {
 		r.logger.Log("error while querying")
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
-		var booking entity.Booking
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt)
+		var booking mapper.BookingMapper
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err

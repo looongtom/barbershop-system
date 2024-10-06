@@ -1,6 +1,7 @@
 package service
 
 import (
+	"DoAn/mapper"
 	"context"
 	"encoding/json"
 	"errors"
@@ -261,6 +262,24 @@ func (b BookingStruct) GetListBooking(ctx context.Context) (interface{}, error) 
 	if err != nil {
 		errMsg := err.Error()
 		return errMsg, err
+	}
+	clientService := pb.NewServicingServiceClient(b.connService)
+
+	for i, booking := range resp {
+		for _, id := range booking.ListServices {
+			service, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
+			if err != nil {
+				fmt.Printf("error when getting service: %v", err)
+				return nil, err
+			}
+			resp[i].ListServiceStruct = append(resp[i].ListServiceStruct, mapper.BookingService{
+				ID:          int(service.Id),
+				Name:        service.Name,
+				Price:       int(service.Price),
+				Description: service.Description,
+				Url:         service.Url,
+			})
+		}
 	}
 	return resp, nil
 }

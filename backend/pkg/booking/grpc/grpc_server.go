@@ -22,7 +22,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load("account.env")
+	err := godotenv.Load("booking.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}

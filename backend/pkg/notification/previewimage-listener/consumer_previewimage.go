@@ -40,6 +40,8 @@ func main() {
 	}
 	defer kafkaBrokerServer.Close()
 
+	log.Println("Kafka listening on :9092 of topic " + topicPreviewImage)
+
 	// connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 	// if err != nil {
 	//	fmt.Printf("did not connect: %v", err)
@@ -105,7 +107,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to produce message: %s\n", err)
 				}
-				fmt.Println("Message produced successfully!")
+				fmt.Println("Message produced successfully to topic " + hairfastTopic)
 
 			case kafka.Error:
 				// Handle Kafka errors
