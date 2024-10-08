@@ -77,12 +77,13 @@ func MakeCreateBookingKafkaEndpoints(svc booking.BookingService) endpoint.Endpoi
 				Message: "failed to create booking",
 				Data:    nil,
 			}, nil
-		} else if resp != nil && resp.(api.KafkaBookingResponse).ID == 0 {
-			return Response{
-				Message: "failed to create booking",
-				Data:    nil,
-			}, nil
 		}
+		//else if resp != nil && resp.(api.KafkaBookingResponse).ID == 0 {
+		//	return Response{
+		//		Message: "failed to create booking",
+		//		Data:    nil,
+		//	}, nil
+		//}
 		return Response{
 			Message: "success",
 			Data:    resp,

@@ -32,3 +32,15 @@ type HairFastResult struct {
 	ColorImgCloud     string `json:"color_img_cloud"`
 	GeneratedImgCloud string `json:"generated_img_cloud"`
 }
+
+type KafkaBookingRequest struct {
+	UUID          string  `json:"uuid"`
+	CustomerID    int     `json:"customer_id"`
+	BarberId      int     `json:"barber_id"`
+	ResultId      int     `json:"result_id,omitempty"`
+	Status        string  `json:"status"`
+	Price         float32 `json:"price"`
+	SlotId        int     `json:"slot_id"`
+	FeedBackId    int     `json:"feedback_id,omitempty"`
+	ListServiceId []int   `json:"list_service"`
+}

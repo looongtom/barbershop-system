@@ -4,21 +4,28 @@ import (
 	"DoAn/api"
 	kafka2 "DoAn/kafka"
 	"DoAn/pb"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
+	"google.golang.org/grpc"
+	"log"
 	logV "log"
+	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/joho/godotenv"
 )
 
 const (
-	groupID     = "booking-group"
-	topic       = "booking"
-	replyTopic  = "reply"
-	kafkaBroker = "localhost:9092"
+	groupID      = "booking-group"
+	topic        = "booking"
+	replyTopic   = "reply"
+	kafkaBroker  = "localhost:9092"
+	websocketURL = "ws://localhost:8080/trigger_booking"
 )
 
 func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, topic, uuid string) {
@@ -51,9 +58,56 @@ func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, topic, uu
 	fmt.Println("Message produced successfully!")
 }
 
+func sendToWebSocket(result api.BookingResponse) {
+	resultJSON, err := json.Marshal(result)
+	if err != nil {
+		log.Printf("Failed to marshal Booking to JSON: %v", err)
+		return
+	}
+	// Create WebSocket client connection
+	conn, _, err := websocket.DefaultDialer.Dial(websocketURL, http.Header{})
+	if err != nil {
+		log.Printf("Failed to connect to WebSocket server: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	// Send the data
+	err = conn.WriteMessage(websocket.TextMessage, resultJSON)
+	if err != nil {
+		log.Printf("Failed to send message to WebSocket server: %v", err)
+	} else {
+		log.Printf("Successfully sent message to WebSocket server: %s", resultJSON)
+	}
+}
+
+func convertListInt32ToInt(listInt32 []int32) []int {
+	listInt := make([]int, len(listInt32))
+	for i, v := range listInt32 {
+		listInt[i] = int(v)
+	}
+	return listInt
+}
+
+func convertListIntToInt32(listInt []int) []int32 {
+	listInt32 := make([]int32, len(listInt))
+	for i, v := range listInt {
+		listInt32[i] = int32(v)
+	}
+	return listInt32
+}
+
+func convertInt32ToString(listInt32 []int32) []string {
+	listString := make([]string, len(listInt32))
+	for i, v := range listInt32 {
+		listString[i] = strconv.Itoa(int(v))
+	}
+	return listString
+}
+
 func main() {
 
-	err := godotenv.Load("criteria.env")
+	err := godotenv.Load("notification.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}
@@ -64,6 +118,13 @@ func main() {
 		return
 	}
 	defer kafkaBrokerServer.Close()
+
+	connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	client := pb.NewBookingServiceClient(connGrpcBooking)
 
 	//connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 	//if err != nil {
@@ -117,26 +178,37 @@ func main() {
 				}
 				fmt.Printf("Received booking: %+v\n", booking)
 
-				//// Convert []int32 to []int
-				//listServiceId := make([]int32, len(booking.ListServiceId))
-				//for i, v := range booking.ListServiceId {
-				//	listServiceId[i] = int32(v)
-				//}
-				//createBooking, err := client.CreateBooking(context.Background(), &pb.BookingRequest{
-				//	CustomerId:    int32(booking.CustomerID),
-				//	BarberId:      int32(booking.BarberId),
-				//	Status:        booking.Status,
-				//	Price:         booking.Price,
-				//	SlotId:        int32(booking.SlotId),
-				//	ListServiceId: listServiceId,
-				//})
-				//if err != nil {
-				//	fmt.Printf("error while creating booking: %v\n", err)
-				//	sendKafkaResponse(kafkaBrokerServer, &pb.Booking{}, replyTopic, booking.UUID)
-				//	continue
-				//}
-				//fmt.Printf("Created booking successfully: %+v\n", createBooking)
-				//sendKafkaResponse(kafkaBrokerServer, createBooking, replyTopic, booking.UUID)
+				listServiceId32 := make([]int32, len(booking.ListServiceId))
+				for i, v := range booking.ListServiceId {
+					listServiceId32[i] = int32(v)
+				}
+				resp, err := client.CreateBooking(context.Background(), &pb.BookingRequest{
+					CustomerId:    int32(booking.CustomerID),
+					BarberId:      int32(booking.BarberId),
+					Status:        booking.Status,
+					Price:         booking.Price,
+					SlotId:        int32(booking.SlotId),
+					ListServiceId: listServiceId32,
+				})
+				if err != nil {
+					fmt.Printf("error while creating booking: %v\n", err)
+					continue
+				}
+				fmt.Printf("Created booking successfully: %+v\n", resp)
+				sendToWebSocket(api.BookingResponse{
+					ID:         int(resp.Id),
+					CustomerID: int(resp.CustomerId),
+					BarberId:   int(resp.BarberId),
+					ResultId:   int(resp.ResultId),
+					Status:     resp.Status,
+					Price:      resp.Price,
+					SlotId:     int(resp.SlotId),
+					FeedBackId: int(resp.FeedbackId),
+					CreatedAt:  int64(resp.CreatedAt),
+					UpdatedAt:  int64(resp.UpdatedAt),
+					//ListServices: convertInt32ToString(resp.ListServiceId),
+				})
+
 			case kafka.Error:
 				// Handle Kafka errors
 				fmt.Printf("Error: %v\n", e)

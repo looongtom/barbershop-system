@@ -136,8 +136,9 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 		}
 	*/
 
-	return nil, nil
+	return serializedBookingRequest, nil
 }
+
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
 	// call grpc api
 	client := pb.NewUserServiceClient(b.connAccount)
@@ -196,16 +197,16 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 		errMsg := err.Error()
 		return errMsg, err
 	}
-	serializedBooking, err := json.Marshal(resp)
-	if err != nil {
-		b.logger.Log("Failed to serialize booking request: %s\n", err)
-		return nil, err
-	}
-	err = kafka2.ProduceMessage(b.kafka, bookingTopic, serializedBooking)
-	if err != nil {
-		b.logger.Log("Failed to produce message: %s\n", err)
-		return nil, err
-	}
+	//serializedBooking, err := json.Marshal(resp)
+	//if err != nil {
+	//	b.logger.Log("Failed to serialize booking request: %s\n", err)
+	//	return nil, err
+	//}
+	//err = kafka2.ProduceMessage(b.kafka, bookingTopic, serializedBooking)
+	//if err != nil {
+	//	b.logger.Log("Failed to produce message: %s\n", err)
+	//	return nil, err
+	//}
 
 	err = b.repository.CreateBookingDetail(ctx, booking.ListServiceId, resp.ID)
 	if err != nil {

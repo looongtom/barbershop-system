@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+message Booking{
+  int32 id = 1;
+  int32 customer_id=2;
+  int32 barber_id=3;
+  int32 result_id=4;
+  string status=5;
+  float price=6;
+  int32  slot_id=7;
+  int32 feedback_id=8;
+  int32 created_at=9;
+  int32 updated_at=10;
+  repeated int32 list_service_id = 11;
+}
+
+message BookingRequest{
+  int32 customer_id=1;
+  int32 barber_id=2;
+  string status=3;
+  float price=4;
+  int32  slot_id=5;
+  repeated int32 list_service_id = 6;
+}
+
+service BookingService{
+  rpc CreateBooking(BookingRequest) returns (Booking){};
+}
