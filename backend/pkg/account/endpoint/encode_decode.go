@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"DoAn/api"
+	"DoAn/entity"
 	"DoAn/pb"
 	"context"
 )
@@ -23,5 +24,10 @@ func DecodeCheckExistedUser(_ context.Context, r interface{}) (interface{}, erro
 
 func EncodeCheckExistedUser(_ context.Context, r interface{}) (interface{}, error) {
 	res := r.(string)
+	return res, nil
+}
+
+func EncodeGetAccount(_ context.Context, r interface{}) (interface{}, error) {
+	res := r.(*entity.Account)
 	return res, nil
 }

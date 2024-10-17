@@ -68,6 +68,7 @@ func main() {
 			endpoint.Endpoints{
 				CheckExistedBarberEndpoint: endpoint.MakeCheckExistedBarberEndpoint(svc),
 				VerifyTokenEndpoint:        endpoint.MakeVerifyTokenEndpoint(authenSvc),
+				GetAccount:                 endpoint.MakeGetAccountEndpoint(svc),
 			}))
 
 		logger.Log("msg", "Account gRPC server", "port", ":9090")

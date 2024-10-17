@@ -56,6 +56,9 @@ func (b BookingStruct) FindBookingByUserOrBarber(ctx context.Context, findReq ap
 }
 
 func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
+	clientService := pb.NewServicingServiceClient(b.connService)
+	clientAccountSvc := pb.NewUserServiceClient(b.connAccount)
+	clientTimeslotSvc := pb.NewTimeslotServiceClient(b.connTimeslot)
 	kafkaBooking := api.BookingRequest{
 		CustomerID:    booking.CustomerID,
 		BarberId:      booking.BarberId,
@@ -76,67 +79,51 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 		b.logger.Log("Failed to produce message: %s\n", err)
 		return nil, err
 	}
-
-	// stupid receiving kafka response
-	/*
-		fmt.Println("Message produced successfully!")
-
-		c, err := kafka.NewConsumer(&kafka.ConfigMap{
-			"bootstrap.servers": kafkaBroker,
-			"group.id":          groupID,
-			"auto.offset.reset": "earliest",
+	barberInfo, err := clientAccountSvc.GetAccountById(ctx, &pb.CheckExistedBarberRequest{Id: int32(booking.BarberId)})
+	if err != nil {
+		fmt.Printf("error when getting barber: %v", err)
+		return nil, err
+	}
+	customerInfo, err := clientAccountSvc.GetAccountById(ctx, &pb.CheckExistedBarberRequest{Id: int32(booking.CustomerID)})
+	if err != nil {
+		fmt.Printf("error when getting customer: %v", err)
+		return nil, err
+	}
+	timeslotInfo, err := clientTimeslotSvc.CheckAvailableTimeslot(ctx, &pb.CheckAvailableTimeslotRequest{Id: int32(booking.SlotId)})
+	if err != nil {
+		fmt.Printf("error when getting timeslot: %v", err)
+		return nil, err
+	}
+	var listServiceName []api.ServiceResponse
+	for _, id := range booking.ListServiceId {
+		service, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
+		if err != nil {
+			fmt.Printf("error when getting service: %v", err)
+			return nil, err
+		}
+		listServiceName = append(listServiceName, api.ServiceResponse{
+			ID:          int(service.Id),
+			Name:        service.Name,
+			Description: service.Description,
+			Price:       int(service.Price),
+			Url:         service.Url,
 		})
-		if err != nil {
-			fmt.Printf("Failed to create consumer: %s\n", err)
-			return nil, err
-		}
-		defer c.Close()
-		// Subscribe to the Kafka topic
-		err = c.SubscribeTopics([]string{replyTopic}, nil)
-		if err != nil {
-			fmt.Printf("Failed to subscribe to topic: %s\n", err)
-			return nil, err
-		}
-		sigchan := make(chan os.Signal, 1)
-		signal.Notify(sigchan, os.Interrupt)
+	}
 
-		run := true
-		for run == true {
-			fmt.Println("=========================Waiting for response=======================")
-			select {
-			case sig := <-sigchan:
-				fmt.Printf("Received signal %v: terminating\n", sig)
-				run = false
-			default:
-				ev := c.Poll(100)
-				if ev == nil {
-					continue
-				}
-				switch e := ev.(type) {
-				case *kafka.Message:
-					var booking api.KafkaBookingResponse
-					err := json.Unmarshal(e.Value, &booking)
-					if err != nil {
-						fmt.Printf("Failed to deserialize message: %s\n", err)
-						return nil, err
-					}
-					if sentUuid == booking.UUID {
-						fmt.Println("=========================Receive the response after call grpc Creatbooking=======================")
-						return booking, nil
-					}
-				case kafka.Error:
-					// Handle Kafka errors
-					fmt.Printf("Error: %v\n", e)
-					return nil, e
-				default:
-					fmt.Printf("Ignored %v\n", e)
-					return nil, errors.New("cannot process message")
-				}
-			}
-		}
-	*/
-
-	return serializedBookingRequest, nil
+	return api.BookingResponse{
+		CustomerID:   int(customerInfo.Id),
+		CustomerName: customerInfo.Fullname,
+		BarberId:     int(barberInfo.Id),
+		BarberName:   barberInfo.Fullname,
+		ResultId:     booking.ResultId,
+		Status:       booking.Status,
+		Price:        booking.Price,
+		SlotId:       booking.SlotId,
+		BookedDate:   timeslotInfo.BookedDate,
+		StartTime:    timeslotInfo.StartTime,
+		FeedBackId:   booking.FeedBackId,
+		ListServices: listServiceName,
+	}, nil
 }
 
 func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error) {
@@ -219,6 +206,8 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 
 func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, error) {
 	clientService := pb.NewServicingServiceClient(b.connService)
+	clientAccountSvc := pb.NewUserServiceClient(b.connAccount)
+	clientTimeslotSvc := pb.NewTimeslotServiceClient(b.connTimeslot)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -228,29 +217,54 @@ func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, 
 		errMsg := err.Error()
 		return errMsg, err
 	}
+	barberInfo, err := clientAccountSvc.GetAccountById(ctx, &pb.CheckExistedBarberRequest{Id: int32(resp.BarberId)})
+	if err != nil {
+		fmt.Printf("error when getting barber: %v", err)
+		return nil, err
+	}
+	customerInfo, err := clientAccountSvc.GetAccountById(ctx, &pb.CheckExistedBarberRequest{Id: int32(resp.CustomerID)})
+	if err != nil {
+		fmt.Printf("error when getting customer: %v", err)
+		return nil, err
+	}
+	timeslotInfo, err := clientTimeslotSvc.CheckAvailableTimeslot(ctx, &pb.CheckAvailableTimeslotRequest{Id: int32(resp.SlotId)})
+	if err != nil {
+		fmt.Printf("error when getting timeslot: %v", err)
+		return nil, err
+	}
 	listIdServices, err := b.repository.GetListIdServiceByBookingId(ctx, idValue)
 	if err != nil {
 		errMsg := err.Error()
 		return errMsg, err
 	}
-	var listServiceName []string
+	var listServiceName []api.ServiceResponse
 	for _, id := range listIdServices {
 		service, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
 		if err != nil {
 			fmt.Printf("error when getting service: %v", err)
 			return nil, err
 		}
-		listServiceName = append(listServiceName, service.Name)
+		listServiceName = append(listServiceName, api.ServiceResponse{
+			ID:          int(service.Id),
+			Name:        service.Name,
+			Description: service.Description,
+			Price:       int(service.Price),
+			Url:         service.Url,
+		})
 	}
 
 	return api.BookingResponse{
 		ID:           resp.ID,
 		CustomerID:   resp.CustomerID,
+		CustomerName: customerInfo.Fullname,
 		BarberId:     resp.BarberId,
+		BarberName:   barberInfo.Fullname,
 		ResultId:     resp.ResultId,
 		Status:       resp.Status,
 		Price:        resp.Price,
 		SlotId:       resp.SlotId,
+		BookedDate:   timeslotInfo.BookedDate,
+		StartTime:    timeslotInfo.StartTime,
 		FeedBackId:   resp.FeedBackId,
 		CreatedAt:    resp.CreatedAt,
 		UpdatedAt:    resp.UpdatedAt,
@@ -258,20 +272,22 @@ func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, 
 	}, nil
 }
 
-func (b BookingStruct) GetListBooking(ctx context.Context) (interface{}, error) {
-	resp, err := b.repository.GetListBooking(ctx)
+func (b BookingStruct) GetListBooking(ctx context.Context, page, pageSize int) (int, interface{}, error) {
+	resp, err := b.repository.GetListBooking(ctx, page, pageSize)
 	if err != nil {
 		errMsg := err.Error()
-		return errMsg, err
+		return 0, errMsg, err
 	}
 	clientService := pb.NewServicingServiceClient(b.connService)
+	clientTimeslotSvc := pb.NewTimeslotServiceClient(b.connTimeslot)
+	clientAccountSvc := pb.NewUserServiceClient(b.connAccount)
 
 	for i, booking := range resp {
 		for _, id := range booking.ListServices {
 			service, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
 			if err != nil {
 				fmt.Printf("error when getting service: %v", err)
-				return nil, err
+				return 0, nil, err
 			}
 			resp[i].ListServiceStruct = append(resp[i].ListServiceStruct, mapper.BookingService{
 				ID:          int(service.Id),
@@ -281,8 +297,31 @@ func (b BookingStruct) GetListBooking(ctx context.Context) (interface{}, error) 
 				Url:         service.Url,
 			})
 		}
+		timeslotInfo, err := clientTimeslotSvc.CheckAvailableTimeslot(ctx, &pb.CheckAvailableTimeslotRequest{Id: int32(booking.SlotId)})
+		if err != nil {
+			fmt.Printf("error when getting timeslot: %v", err)
+			return 0, nil, err
+		}
+		resp[i].TimeSlot = mapper.BookingTimeSlot{
+			ID:         int(timeslotInfo.Id),
+			StartTime:  timeslotInfo.StartTime,
+			BookedDate: timeslotInfo.BookedDate,
+		}
+		barberInfo, err := clientAccountSvc.GetAccountById(ctx, &pb.CheckExistedBarberRequest{Id: int32(booking.BarberId)})
+		if err != nil {
+			fmt.Printf("error when getting barber: %v", err)
+			return 0, nil, err
+		}
+		customerInfo, err := clientAccountSvc.GetAccountById(ctx, &pb.CheckExistedBarberRequest{Id: int32(booking.CustomerID)})
+		if err != nil {
+			fmt.Printf("error when getting customer: %v", err)
+			return 0, nil, err
+		}
+		resp[i].BarberName = barberInfo.Fullname
+		resp[i].CustomerName = customerInfo.Fullname
 	}
-	return resp, nil
+	totalCount, err := b.repository.GetTotalCountBooking(ctx)
+	return totalCount, resp, nil
 }
 
 func (b BookingStruct) UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (interface{}, error) {

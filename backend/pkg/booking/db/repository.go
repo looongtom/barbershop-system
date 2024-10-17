@@ -104,7 +104,20 @@ func (r repo) GetListIdServiceByBookingId(ctx context.Context, id int) ([]int, e
 	}
 	return listIds, nil
 }
-func (r repo) GetListBooking(ctx context.Context) ([]mapper.BookingMapper, error) {
+
+func (r repo) GetTotalCountBooking(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM booking;`
+	var total int
+	err := r.db.QueryRow(query).Scan(&total)
+	if err != nil {
+		r.logger.Log("error while scanning")
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.BookingMapper, error) {
+	offset := (page - 1) * pageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
 			b.*, 
@@ -114,8 +127,9 @@ func (r repo) GetListBooking(ctx context.Context) ([]mapper.BookingMapper, error
 		LEFT JOIN 
 			booking_detail bd ON b.id = bd.booking_id
 		GROUP BY 
-			b.id;
-		`)
+			b.id
+		LIMIT $1 OFFSET $2;
+		`, pageSize, offset)
 	if err != nil {
 		r.logger.Log("error while querying")
 		return nil, err

@@ -74,6 +74,14 @@ func (u UserServiceStruct) CheckExistedBarber(ctx context.Context, id int) (inte
 	return data, nil
 }
 
+func (u UserServiceStruct) GetAccount(ctx context.Context, id int) (interface{}, error) {
+	data, err := u.repository.GetAccount(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (u UserServiceStruct) GetAllBarber(ctx context.Context) (interface{}, error) {
 	data, err := u.repository.GetAllUserByRole(ctx, entity.RoleBarber)
 	if err != nil {

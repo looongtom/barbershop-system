@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/joho/godotenv"
@@ -156,6 +157,7 @@ func main() {
 	signal.Notify(sigchan, os.Interrupt)
 
 	// Start consuming messages
+	fmt.Printf("Consuming messages from topic: %s\n", topic)
 	run := true
 	for run == true {
 		select {
@@ -185,13 +187,24 @@ func main() {
 				resp, err := client.CreateBooking(context.Background(), &pb.BookingRequest{
 					CustomerId:    int32(booking.CustomerID),
 					BarberId:      int32(booking.BarberId),
-					Status:        booking.Status,
+					Status:        "Booked",
 					Price:         booking.Price,
 					SlotId:        int32(booking.SlotId),
 					ListServiceId: listServiceId32,
 				})
 				if err != nil {
 					fmt.Printf("error while creating booking: %v\n", err)
+					sendToWebSocket(api.BookingResponse{
+						CustomerID: booking.CustomerID,
+						BarberId:   booking.BarberId,
+						ResultId:   booking.ResultId,
+						Status:     "Canceled",
+						Price:      booking.Price,
+						SlotId:     booking.SlotId,
+						FeedBackId: booking.FeedBackId,
+						CreatedAt:  time.Now().Unix(),
+						//ListServices: convertInt32ToString(resp.ListServiceId),
+					})
 					continue
 				}
 				fmt.Printf("Created booking successfully: %+v\n", resp)

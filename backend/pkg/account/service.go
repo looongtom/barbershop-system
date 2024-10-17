@@ -15,6 +15,7 @@ type UserService interface {
 	//RefreshToken(ctx context.Context, username string) (interface{}, error)
 
 	CheckExistedBarber(ctx context.Context, id int) (interface{}, error)
+	GetAccount(ctx context.Context, id int) (interface{}, error)
 
 	GetAllBarber(ctx context.Context) (interface{}, error)
 }

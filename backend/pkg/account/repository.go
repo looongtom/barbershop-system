@@ -15,6 +15,7 @@ type UserRepository interface {
 	//RefreshToken(ctx context.Context, username string) (interface{}, error)
 
 	CheckExistedBarber(ctx context.Context, id int) (string, error)
+	GetAccount(ctx context.Context, id int) (*entity.Account, error)
 
 	GetAllUserByRole(ctx context.Context, role int) ([]entity.Account, error)
 }

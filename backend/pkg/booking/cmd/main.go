@@ -110,7 +110,7 @@ func main() {
 
 	GetListBookingHandler := httptransport.NewServer(
 		transport.MakeGetListBookingEndpoints(svc),
-		transport.DecodeEmptyRequest,
+		transport.DecodeGetListBookingRequest,
 		transport.EncodeResponse,
 	)
 

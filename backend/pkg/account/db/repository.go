@@ -151,6 +151,17 @@ func (r repo) GetAllUserByRole(ctx context.Context, role int) ([]entity.Account,
 	return result, nil
 }
 
+func (r repo) GetAccount(ctx context.Context, id int) (*entity.Account, error) {
+	query := `
+	SELECT id,username,email,role,phone_number,full_name,about,avatar,created_at,updated_at FROM account WHERE id=$1;	
+`
+	var result entity.Account
+	err := r.db.QueryRow(query, id).Scan(&result.ID, &result.Username, &result.Email, &result.Role, &result.PhoneNumber, &result.FullName, &result.About, &result.Avatar, &result.CreatedAt, &result.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
 func (r repo) CheckExistedBarber(ctx context.Context, id int) (string, error) {
 	query := `
 	SELECT id,role from account where id = $1 ;

@@ -9,7 +9,8 @@ import (
 
 type BookingRepository interface {
 	CreateBooking(ctx context.Context, booking api.BookingRequest) (entity.Booking, error)
-	GetListBooking(ctx context.Context) ([]mapper.BookingMapper, error)
+	GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.BookingMapper, error)
+	GetTotalCountBooking(ctx context.Context) (int, error)
 	GetBookingById(ctx context.Context, id int) (entity.Booking, error)
 	UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (entity.Booking, error)
 	FindBookingByUserOrBarber(ctx context.Context, findReq api.FindBookingRequest) ([]entity.Booking, error)

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -31,6 +32,18 @@ type (
 		Price      float32 `json:"price"`
 	}
 
+	GetListBookingRequest struct {
+		Page     int `json:"page"`
+		PageSize int `json:"pageSize"`
+	}
+
+	GetListBookingResponse struct {
+		Message string      `json:"message"`
+		Page    int         `json:"page"`
+		Total   int         `json:"total"`
+		Data    interface{} `json:"data"`
+	}
+
 	Response struct {
 		Message string      `json:"message"`
 		Data    interface{} `json:"data"`
@@ -50,9 +63,12 @@ func MakeGetBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
 
 func MakeGetListBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		resp, err := svc.GetListBooking(ctx)
-		return Response{
+		req := request.(GetListBookingRequest)
+		total, resp, err := svc.GetListBooking(ctx, req.Page, req.PageSize)
+		return GetListBookingResponse{
 			Message: "success",
+			Page:    req.Page,
+			Total:   total,
 			Data:    resp,
 		}, err
 	}
@@ -118,6 +134,20 @@ func DecodeGetBookingRequest(ctx context.Context, r *http.Request) (request inte
 
 func DecodeEmptyRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	return nil, nil
+}
+func DecodeGetListBookingRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	//get page value from request param
+	page := r.URL.Query().Get("page")
+	pageValue, err := strconv.Atoi(page)
+	if err != nil {
+		return nil, err
+	}
+	pageSize := r.URL.Query().Get("pageSize")
+	pageSizeValue, err := strconv.Atoi(pageSize)
+	return GetListBookingRequest{
+		Page:     pageValue,
+		PageSize: pageSizeValue,
+	}, nil
 }
 
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {

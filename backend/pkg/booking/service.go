@@ -9,7 +9,7 @@ type BookingService interface {
 	CreateBooking(ctx context.Context, booking api.BookingRequest) (interface{}, error)
 	CreateBookingKafka(ctx context.Context, booking api.BookingRequest) (interface{}, error)
 	GetBooking(ctx context.Context, id string) (interface{}, error)
-	GetListBooking(ctx context.Context) (interface{}, error)
+	GetListBooking(ctx context.Context, page, pageSize int) (int, interface{}, error)
 	UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (interface{}, error)
 
 	FindBookingByUserOrBarber(ctx context.Context, findReq api.FindBookingRequest) (interface{}, error)
