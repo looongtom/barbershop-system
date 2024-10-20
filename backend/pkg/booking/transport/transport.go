@@ -3,6 +3,7 @@ package transport
 import (
 	"DoAn"
 	"DoAn/api"
+	"DoAn/common"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -39,8 +40,8 @@ type (
 
 	GetListBookingResponse struct {
 		Message string      `json:"message"`
-		Page    int         `json:"page"`
-		Total   int         `json:"total"`
+		Page    *int        `json:"page"`
+		Total   *int        `json:"total"`
 		Data    interface{} `json:"data"`
 	}
 
@@ -67,8 +68,42 @@ func MakeGetListBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
 		total, resp, err := svc.GetListBooking(ctx, req.Page, req.PageSize)
 		return GetListBookingResponse{
 			Message: "success",
-			Page:    req.Page,
-			Total:   total,
+			Page:    &req.Page,
+			Total:   &total,
+			Data:    resp,
+		}, err
+	}
+}
+
+func MakeFindBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (resp interface{}, err error) {
+		req := request.(api.FindListBookingRequest)
+		var total int
+		if req.Role == common.RoleUser {
+			total, resp, err = svc.FindBookingByUser(ctx, req)
+			if err != nil {
+				return GetListBookingResponse{
+					Message: "failed",
+					Page:    nil,
+					Total:   nil,
+					Data:    nil,
+				}, err
+			}
+		} else if req.Role == common.RoleBarber {
+			total, resp, err = svc.FindBookingByBarber(ctx, req)
+			if err != nil {
+				return GetListBookingResponse{
+					Message: "failed",
+					Page:    nil,
+					Total:   nil,
+					Data:    nil,
+				}, err
+			}
+		}
+		return GetListBookingResponse{
+			Message: "success",
+			Page:    &req.Page,
+			Total:   &total,
 			Data:    resp,
 		}, err
 	}
@@ -114,6 +149,16 @@ func MakeUpdateBookingEndpoints(svc booking.BookingService) endpoint.Endpoint {
 		return Response{
 			Message: "success",
 			Data:    resp,
+		}, err
+	}
+}
+
+func MakeUpdateBookingServiceEndpoints(svc booking.BookingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.UpdateBookingServiceRequest)
+		err := svc.UpdateBookingService(ctx, req)
+		return Response{
+			Message: "success",
 		}, err
 	}
 }
@@ -165,6 +210,34 @@ func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func DecodeUpdateBookingRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
 	var req api.UpdateBookingRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func DecodeUpdateBookingServiceRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
+	var req api.UpdateBookingServiceRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func DecodeFindBookingRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
+	var req api.FindListBookingRequest
+	roleName := r.Header.Get("role_name")
+	accountId := r.Header.Get("account_id")
+
+	req.Role = roleName
+
+	accountIdValue, ok := strconv.Atoi(accountId)
+	if ok != nil {
+		return
+	}
+	req.Account = accountIdValue
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err

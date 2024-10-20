@@ -58,7 +58,7 @@ func (r repo) CreateBookingDetail(ctx context.Context, listService []int, bookin
 	}
 	return nil
 }
-func (r repo) CreateBooking(ctx context.Context, booking api.BookingRequest) (entity.Booking, error) {
+func (r *repo) CreateBooking(ctx context.Context, booking api.BookingRequest) (entity.Booking, error) {
 	newBooking := entity.Booking{
 		CustomerID: booking.CustomerID,
 		BarberId:   booking.BarberId,
@@ -116,6 +116,28 @@ func (r repo) GetTotalCountBooking(ctx context.Context) (int, error) {
 	return total, nil
 }
 
+func (r repo) GetTotalCountBookingByUserId(ctx context.Context, id int) (int, error) {
+	query := `SELECT COUNT(*) FROM booking where customer_id = $1;`
+	var total int
+	err := r.db.QueryRow(query, id).Scan(&total)
+	if err != nil {
+		r.logger.Log("error while scanning")
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r repo) GetTotalCountBookingByBarberId(ctx context.Context, id int) (int, error) {
+	query := `SELECT COUNT(*) FROM booking where barber_id = $1;`
+	var total int
+	err := r.db.QueryRow(query, id).Scan(&total)
+	if err != nil {
+		r.logger.Log("error while scanning")
+		return 0, err
+	}
+	return total, nil
+}
+
 func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.BookingMapper, error) {
 	offset := (page - 1) * pageSize
 	var listBooking []mapper.BookingMapper
@@ -157,6 +179,40 @@ func (r repo) GetBookingById(ctx context.Context, id int) (entity.Booking, error
 	return booking, nil
 }
 
+func (r repo) UpdateBookingDetailService(ctx context.Context, listService []int, bookingId int) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		r.logger.Log("error while beginning transaction")
+		return err
+	}
+
+	_, err = tx.Exec("DELETE FROM booking_detail WHERE booking_id = $1", bookingId)
+	if err != nil {
+		tx.Rollback()
+		r.logger.Log("error while deleting data")
+		return err
+	}
+
+	query := "INSERT INTO booking_detail(booking_id, service_id) VALUES($1, $2)"
+	for _, serviceId := range listService {
+		_, err := tx.Exec(query, bookingId, serviceId)
+		if err != nil {
+			tx.Rollback()
+			r.logger.Log("error while inserting data")
+			return err
+		}
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		r.logger.Log("error while committing transaction")
+		return err
+	}
+
+	return nil
+}
+
 func (r repo) UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (entity.Booking, error) {
 	query := `UPDATE booking SET customer_id = $1, barber_id = $2, result_id = $3, status = $4, price = $5, slot_id = $6, feedback_id = $7, updated_at = $8 WHERE id = $9`
 	updateBooking := entity.Booking{
@@ -178,16 +234,61 @@ func (r repo) UpdateBooking(ctx context.Context, booking api.UpdateBookingReques
 	return updateBooking, nil
 }
 
-func (r repo) FindBookingByUserOrBarber(ctx context.Context, findReq api.FindBookingRequest) ([]entity.Booking, error) {
-	var listBooking []entity.Booking
-	rows, err := r.db.Query("SELECT * FROM booking WHERE customer_id = $1 OR barber_id = $2", findReq.CustomerId, findReq.BarberId)
+func (r repo) FindBookingByBarber(ctx context.Context, findReq api.FindListBookingRequest) ([]mapper.BookingMapper, error) {
+	offset := (findReq.Page - 1) * findReq.PageSize
+	var listBooking []mapper.BookingMapper
+	rows, err := r.db.Query(`SELECT 
+			b.*, 
+			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
+		FROM 
+			booking b
+		LEFT JOIN 
+			booking_detail bd ON b.id = bd.booking_id
+		WHERE b.barber_id  = $1
+		GROUP BY 
+			b.id
+		ORDER BY b.updated_at DESC
+		LIMIT $2 OFFSET $3 ;
+		`, findReq.Account, findReq.PageSize, offset)
 	if err != nil {
 		r.logger.Log("error while querying")
 		return nil, err
 	}
 	for rows.Next() {
-		var booking entity.Booking
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt)
+		var booking mapper.BookingMapper
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
+		if err != nil {
+			r.logger.Log("error while scanning")
+			return nil, err
+		}
+		listBooking = append(listBooking, booking)
+	}
+	return listBooking, nil
+}
+
+func (r repo) FindBookingByUser(ctx context.Context, findReq api.FindListBookingRequest) ([]mapper.BookingMapper, error) {
+	offset := (findReq.Page - 1) * findReq.PageSize
+	var listBooking []mapper.BookingMapper
+	rows, err := r.db.Query(`SELECT 
+			b.*, 
+			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
+		FROM 
+			booking b
+		LEFT JOIN 
+			booking_detail bd ON b.id = bd.booking_id
+		WHERE b.customer_id = $1
+		GROUP BY 
+			b.id
+		ORDER BY b.updated_at DESC
+		LIMIT $2 OFFSET $3 ;
+		`, findReq.Account, findReq.PageSize, offset)
+	if err != nil {
+		r.logger.Log("error while querying")
+		return nil, err
+	}
+	for rows.Next() {
+		var booking mapper.BookingMapper
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err

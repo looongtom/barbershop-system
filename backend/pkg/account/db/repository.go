@@ -57,27 +57,6 @@ func (r repo) Login(ctx context.Context, user entity.Account) (*int, error) {
 		return nil, errors.New("username or password incorrect")
 	}
 
-	//token, errCreate := auth.CreateAccessToken(user.Username)
-	//if errCreate != nil {
-	//	return false, errCreate
-	//}
-	//
-	//newToken := bson.M{"token": token, "account": user.Username, "created_at": time.Now()}
-	//_, errs := r.collection.InsertOne(context.TODO(), newToken)
-	//if errs != nil {
-	//	return nil, nil, errs
-	//}
-	//
-	//refreshToken, errCreate := auth.CreateRefreshToken(user.Username)
-	//if errCreate != nil {
-	//	return nil, nil, errCreate
-	//}
-	//newRefreshToken := bson.M{"refresh_token": refreshToken, "account": user.Username, "created_at": time.Now()}
-	//_, errs = r.collection.InsertOne(context.TODO(), newRefreshToken)
-	//if errs != nil {
-	//	return nil, nil, errs
-	//}
-
 	return &result.ID, nil
 }
 

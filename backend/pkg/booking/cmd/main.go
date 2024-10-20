@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	kafkaBroker = "localhost:9092"
+	kafkaBrokerServer = "localhost:9092"
 )
 
 func main() {
@@ -60,28 +60,21 @@ func main() {
 			logV.Fatalf("Error loading repository, %v", err)
 		}
 
-		connGrpcAccount, err := grpc.Dial(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
-		if err != nil {
-			fmt.Printf("did not connect: %v", err)
-			logV.Fatalf("Error getting env, %v", err)
-		}
-		defer connGrpcAccount.Close()
-
-		connGrpcTimeslot, err := grpc.Dial(os.Getenv("GRPC_TIMESLOT_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		connGrpcTimeslot, err := grpc.NewClient(os.Getenv("GRPC_TIMESLOT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			fmt.Printf("did not connect: %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
 		defer connGrpcTimeslot.Close()
 
-		connGrpcService, err := grpc.Dial(os.Getenv("GRPC_SERVICE_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+		connGrpcService, err := grpc.NewClient(os.Getenv("GRPC_SERVICE_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			fmt.Printf("did not connect: %v", err)
 			logV.Fatalf("Error getting env, %v", err)
 		}
 		defer connGrpcService.Close()
 
-		kafkaBroker, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
+		kafkaBroker, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBrokerServer})
 		if err != nil {
 			fmt.Printf("Failed to create producer: %s\n", err)
 			return
@@ -114,9 +107,21 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	FindBookingHandler := httptransport.NewServer(
+		transport.MakeFindBookingEndpoints(svc),
+		transport.DecodeFindBookingRequest,
+		transport.EncodeResponse,
+	)
+
 	UpdateBookingHandler := httptransport.NewServer(
 		transport.MakeUpdateBookingEndpoints(svc),
 		transport.DecodeUpdateBookingRequest,
+		transport.EncodeResponse,
+	)
+
+	UpdateBookingServiceHandler := httptransport.NewServer(
+		transport.MakeUpdateBookingServiceEndpoints(svc),
+		transport.DecodeUpdateBookingServiceRequest,
 		transport.EncodeResponse,
 	)
 
@@ -125,8 +130,10 @@ func main() {
 	r.Handle("/booking/create", middleware.JWTMiddleware(CreateBookingHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/create-kafka", middleware.JWTMiddleware(CreateBookingKafkaHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/update", middleware.JWTMiddlewareBarber(UpdateBookingHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/booking/update-booking-service", middleware.JWTMiddlewareBarber(UpdateBookingServiceHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/get-by-id", middleware.JWTMiddleware(GetBookingHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/booking/get-list", middleware.JWTMiddleware(GetListBookingHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/booking/find", middleware.JWTMiddlewareGetListBooking(FindBookingHandler, connGrpcAccount)).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8002")
 	logger.Log("err", http.ListenAndServe(":8002", nil))

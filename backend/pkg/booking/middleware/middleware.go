@@ -55,6 +55,46 @@ func JWTMiddleware(next http.Handler, svc *grpc.ClientConn) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+func JWTMiddlewareGetListBooking(next http.Handler, svc *grpc.ClientConn) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
+			return
+		}
+		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+		client := pb.NewUserServiceClient(svc)
+
+		userId, err := client.VerifyToken(context.Background(), &pb.VerifyTokenRequest{Token: tokenString})
+		if err != nil {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		accountId, ok := strconv.Atoi(userId.Value)
+		if ok != nil {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		checkBarber, err := client.CheckExistedBarber(context.Background(), &pb.CheckExistedBarberRequest{Id: int32(accountId)})
+		if err != nil {
+			fmt.Printf("error when checking account: %v", err)
+			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
+			return
+		}
+		if checkBarber == nil ||
+			checkBarber.Value == common.RoleUnknown {
+			http.Error(w, "Unauthorized account", http.StatusUnauthorized)
+			return
+		}
+
+		setSessionHandler(w, r, userId.Value)
+		r.Header.Set("role_name", checkBarber.GetValue())
+		r.Header.Set("account_id", userId.Value)
+		next.ServeHTTP(w, r)
+	})
+}
 func JWTMiddlewareAdmin(next http.Handler, svc *grpc.ClientConn) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
@@ -112,7 +152,6 @@ func JWTMiddlewareBarber(next http.Handler, svc *grpc.ClientConn) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-		fmt.Println("userId: ", userId)
 
 		accountId, ok := strconv.Atoi(userId.Value)
 		if ok != nil {
