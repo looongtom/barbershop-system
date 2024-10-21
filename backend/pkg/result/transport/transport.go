@@ -6,7 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -28,7 +30,7 @@ type (
 func MakeCreateOrUpdateResultEndpoints(svc result.ResultService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.CreateOrUpdateResult)
-		resp, err := svc.CreateOrUpdateResult(ctx, req)
+		resp, err := svc.CreateResult(ctx, req)
 		message := "updated successfully"
 		if req.ID == 0 {
 			message = "created successfully"
@@ -62,8 +64,8 @@ func MakeGetResultByUserIdEndpoints(svc result.ResultService) endpoint.Endpoint 
 }
 func MakeGetResultByBookingIdEndpoints(svc result.ResultService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(api.GetResultById)
-		resp, err := svc.GetResultByBarberId(ctx, req.ID)
+		req := request.(int)
+		resp, err := svc.GetResultByBookingId(ctx, req)
 		return Response{
 			Message: "success",
 			Data:    resp,
@@ -73,28 +75,59 @@ func MakeGetResultByBookingIdEndpoints(svc result.ResultService) endpoint.Endpoi
 
 func DecodeCreateOrUpdateResult(_ context.Context, r *http.Request) (interface{}, error) {
 	var request api.CreateOrUpdateResult
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		return nil, err
-	}
-	if &request.ID == nil {
-		if request.Description == "" || &request.Description == nil {
-			return nil, errors.New("description is required")
+	r.ParseMultipartForm(10 << 20)
+	//get list image
+	files := r.MultipartForm.File["list_img"]
+	for _, file := range files {
+		f, err := file.Open()
+		if err != nil {
+			return nil, err
 		}
+		request.ListImg = append(request.ListImg, f)
 	}
+	barberIdValue, ok := strconv.Atoi(r.FormValue("barber_id"))
+	if ok != nil {
+		fmt.Println("Error Retrieving category_id")
+		return nil, ok
+	}
+	cusIdValue, ok := strconv.Atoi(r.FormValue("user_id"))
+	if ok != nil {
+		fmt.Println("Error Retrieving category_id")
+		return nil, ok
+	}
+	bookingIdValue, ok := strconv.Atoi(r.FormValue("booking_id"))
+	if ok != nil {
+		fmt.Println("Error Retrieving category_id")
+		return nil, ok
+	}
+	request.Description = r.FormValue("description")
+
+	idValue := r.FormValue("id")
+	if idValue != "" && &idValue != nil {
+		id, ok := strconv.Atoi(idValue)
+		if ok != nil {
+			fmt.Println("Error Retrieving id")
+			return nil, ok
+		}
+		request.ID = id
+	}
+	request.BarberId = barberIdValue
+	request.UserId = cusIdValue
+	request.BookingId = bookingIdValue
 	return request, nil
 }
 
 func DecodeGetResultById(_ context.Context, r *http.Request) (interface{}, error) {
-	var request api.GetResultById
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		return nil, err
+	id := r.URL.Query().Get("id")
+	if id != "" && &id != nil {
+		idValue, ok := strconv.Atoi(id)
+		if ok != nil {
+			fmt.Println("Error Retrieving id")
+			return nil, ok
+		}
+		return idValue, nil
 	}
-	if &request.ID == nil {
-		return nil, errors.New("id is required")
-	}
-	return request, nil
+	return nil, errors.New("id is required")
 }
 
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {

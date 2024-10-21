@@ -80,10 +80,10 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Methods("POST").Path("/createOrUpdateResult").Handler(middleware.JWTMiddlewareBarber(CreateOrUpdateResultHandler, connGrpcAccount))
-	r.Methods("GET").Path("/getResultByBarberId").Handler(middleware.JWTMiddleware(GetResultByBarberIdHandler, connGrpcAccount))
-	r.Methods("GET").Path("/getResultByUserId").Handler(middleware.JWTMiddleware(GetResultByUserIdHandler, connGrpcAccount))
-	r.Methods("GET").Path("/getResultByBookingId").Handler(middleware.JWTMiddleware(GetResultByBookingIdHandler, connGrpcAccount))
+	r.Methods("POST").Path("/result/createOrUpdateResult").Handler(middleware.JWTMiddlewareBarber(CreateOrUpdateResultHandler, connGrpcAccount))
+	r.Methods("GET").Path("/result/getResultByBarberId").Handler(middleware.JWTMiddleware(GetResultByBarberIdHandler, connGrpcAccount))
+	r.Methods("GET").Path("/result/getResultByUserId").Handler(middleware.JWTMiddleware(GetResultByUserIdHandler, connGrpcAccount))
+	r.Methods("GET").Path("/result/getResultByBookingId").Handler(middleware.JWTMiddleware(GetResultByBookingIdHandler, connGrpcAccount))
 
 	logger.Log("msg", "HTTP", "addr", ":8007")
 	logger.Log("err", http.ListenAndServe(":8007", nil))

@@ -11,8 +11,8 @@ type Result struct {
 }
 
 type ImageResult struct {
-	Id          int    `json:"id"`
-	Url         string `json:"url"`
-	Description string `json:"description"`
-	ResultId    int    `json:"result_id"`
+	Id        int    `json:"id"`
+	Url       string `json:"url"`
+	ResultId  int    `json:"result_id"`
+	CreatedAt int64  `json:"created_at"`
 }

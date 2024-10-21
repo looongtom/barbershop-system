@@ -446,13 +446,15 @@ func contains(services []int, id int) bool {
 }
 
 func (b BookingStruct) UpdateBookingService(ctx context.Context, booking api.UpdateBookingServiceRequest) error {
+	totalServicePrice := 0.0
 	clientService := pb.NewServicingServiceClient(b.connService)
 	for _, id := range booking.ListServiceId {
-		_, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
+		serviceResp, err := clientService.GetServiceById(ctx, &pb.GetServiceByIdRequest{Id: int32(id)})
 		if err != nil {
 			fmt.Printf("error when getting service: %v", err)
 			return err
 		}
+		totalServicePrice += float64(serviceResp.Price)
 	}
 
 	err := b.repository.UpdateBookingDetailService(ctx, booking.ListServiceId, booking.Id)
@@ -460,6 +462,30 @@ func (b BookingStruct) UpdateBookingService(ctx context.Context, booking api.Upd
 		fmt.Printf("error when updating booking detail service: %v", err)
 		return err
 	}
+
+	respBooking, err := b.repository.GetBookingById(ctx, booking.Id)
+	if err != nil {
+		fmt.Printf("booking not found")
+		return err
+	}
+	respBooking.Price = float32(totalServicePrice)
+
+	_, err = b.repository.UpdateBooking(ctx, api.UpdateBookingRequest{
+		Id:            respBooking.ID,
+		CustomerID:    respBooking.CustomerID,
+		BarberId:      respBooking.BarberId,
+		ResultId:      respBooking.ResultId,
+		Status:        respBooking.Status,
+		Price:         respBooking.Price,
+		SlotId:        respBooking.SlotId,
+		FeedBackId:    respBooking.FeedBackId,
+		ListServiceId: booking.ListServiceId,
+	})
+	if err != nil {
+		fmt.Printf("error when updating booking: %v", err)
+		return err
+	}
+
 	return nil
 }
 
