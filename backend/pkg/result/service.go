@@ -7,6 +7,8 @@ import (
 
 type ResultService interface {
 	CreateResult(ctx context.Context, result api.CreateOrUpdateResult) (interface{}, error)
+	UpdateResult(ctx context.Context, result api.CreateOrUpdateResult) (interface{}, error)
+
 	GetResultByBarberId(ctx context.Context, barberId int) (interface{}, error)
 	GetResultByUserId(ctx context.Context, userId int) (interface{}, error)
 	GetResultByBookingId(ctx context.Context, bookingId int) (interface{}, error)

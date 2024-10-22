@@ -22,6 +22,16 @@ func NewRepository(db *sql.DB, logger log.Logger) (result.ResultRepository, erro
 	}, nil
 }
 
+func (r repo) UpdateResult(ctx context.Context, result entity.Result) (*entity.Result, error) {
+	query := `UPDATE result SET description=$1, updated_at=$2 WHERE id=$3 RETURNING id`
+	ts := time.Now()
+	err := r.db.QueryRowContext(ctx, query, result.Description, ts.Unix(), result.Id).Scan(&result.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (r repo) CreateOrUpdateResult(ctx context.Context, result entity.Result) (*entity.Result, error) {
 	query := `INSERT INTO result (barber_id, user_id, booking_id, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 	err := r.db.QueryRowContext(ctx, query, result.BarberId, result.UserId, result.BookingId, result.Description, result.CreatedAt, result.UpdatedAt).Scan(&result.Id)
@@ -31,16 +41,35 @@ func (r repo) CreateOrUpdateResult(ctx context.Context, result entity.Result) (*
 	return &result, nil
 }
 
-func (r repo) GetResultByBarberId(ctx context.Context, barberId int) (entity.Result, error) {
-	//TODO implement me
-	panic("implement me")
+func (r repo) GetResultByBarberId(ctx context.Context, barberId int) (*entity.Result, error) {
+	query := `SELECT * FROM result WHERE barber_id=$1`
+	var result entity.Result
+	err := r.db.QueryRowContext(ctx, query, barberId).Scan(&result.Id, &result.BarberId, &result.UserId, &result.BookingId, &result.Description, &result.CreatedAt, &result.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
-func (r repo) GetResultByUserId(ctx context.Context, userId int) (entity.Result, error) {
-	//TODO implement me
-	panic("implement me")
+func (r repo) GetResultByUserId(ctx context.Context, userId int) (*entity.Result, error) {
+	query := `SELECT * FROM result WHERE user_id=$1`
+	var result entity.Result
+	err := r.db.QueryRowContext(ctx, query, userId).Scan(&result.Id, &result.BarberId, &result.UserId, &result.BookingId, &result.Description, &result.CreatedAt, &result.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
+func (r repo) GetResultById(ctx context.Context, id int) (*entity.Result, error) {
+	query := `SELECT * FROM result WHERE id=$1`
+	var result entity.Result
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&result.Id, &result.BarberId, &result.UserId, &result.BookingId, &result.Description, &result.CreatedAt, &result.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
 func (r repo) GetResultByBookingId(ctx context.Context, bookingId int) (*entity.Result, error) {
 	query := `SELECT * FROM result WHERE booking_id=$1`
 	var result entity.Result
@@ -68,6 +97,16 @@ func (r repo) GetImageResultByResultId(ctx context.Context, resultId int) ([]ent
 	}
 	return listImageResult, nil
 }
+
+func (r repo) DeleteImageResultByResultId(ctx context.Context, resultId int) error {
+	query := `DELETE FROM image_result WHERE result_id=$1`
+	_, err := r.db.ExecContext(ctx, query, resultId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r repo) CreateOrUpdateImageResult(ctx context.Context, imageResult entity.ImageResult) (*entity.ImageResult, error) {
 	query := `INSERT INTO image_result (url, result_id, created_at) VALUES ($1, $2, $3) RETURNING id`
 	ts := time.Now()

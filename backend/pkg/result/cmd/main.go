@@ -60,6 +60,12 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	UpdateResultHandler := httptransport.NewServer(
+		transport.UpdateResultEndpoints(svc),
+		transport.DecodeCreateOrUpdateResult,
+		transport.EncodeResponse,
+	)
+
 	GetResultByBarberIdHandler := httptransport.NewServer(
 		transport.MakeGetResultByBarberIdEndpoints(svc),
 		transport.DecodeGetResultById,
@@ -80,7 +86,8 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Methods("POST").Path("/result/createOrUpdateResult").Handler(middleware.JWTMiddlewareBarber(CreateOrUpdateResultHandler, connGrpcAccount))
+	r.Methods("POST").Path("/result/create").Handler(middleware.JWTMiddlewareBarber(CreateOrUpdateResultHandler, connGrpcAccount))
+	r.Methods("POST").Path("/result/update").Handler(middleware.JWTMiddlewareBarber(UpdateResultHandler, connGrpcAccount))
 	r.Methods("GET").Path("/result/getResultByBarberId").Handler(middleware.JWTMiddleware(GetResultByBarberIdHandler, connGrpcAccount))
 	r.Methods("GET").Path("/result/getResultByUserId").Handler(middleware.JWTMiddleware(GetResultByUserIdHandler, connGrpcAccount))
 	r.Methods("GET").Path("/result/getResultByBookingId").Handler(middleware.JWTMiddleware(GetResultByBookingIdHandler, connGrpcAccount))

@@ -41,6 +41,20 @@ func MakeCreateOrUpdateResultEndpoints(svc result.ResultService) endpoint.Endpoi
 		}, err
 	}
 }
+func UpdateResultEndpoints(svc result.ResultService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.CreateOrUpdateResult)
+		resp, err := svc.UpdateResult(ctx, req)
+		message := "updated successfully"
+		if req.ID == 0 {
+			message = "created successfully"
+		}
+		return Response{
+			Message: message,
+			Data:    resp,
+		}, err
+	}
+}
 
 func MakeGetResultByBarberIdEndpoints(svc result.ResultService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
