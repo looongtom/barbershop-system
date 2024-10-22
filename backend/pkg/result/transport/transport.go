@@ -99,21 +99,7 @@ func DecodeCreateOrUpdateResult(_ context.Context, r *http.Request) (interface{}
 		}
 		request.ListImg = append(request.ListImg, f)
 	}
-	barberIdValue, ok := strconv.Atoi(r.FormValue("barber_id"))
-	if ok != nil {
-		fmt.Println("Error Retrieving category_id")
-		return nil, ok
-	}
-	cusIdValue, ok := strconv.Atoi(r.FormValue("user_id"))
-	if ok != nil {
-		fmt.Println("Error Retrieving category_id")
-		return nil, ok
-	}
-	bookingIdValue, ok := strconv.Atoi(r.FormValue("booking_id"))
-	if ok != nil {
-		fmt.Println("Error Retrieving category_id")
-		return nil, ok
-	}
+
 	request.Description = r.FormValue("description")
 
 	idValue := r.FormValue("id")
@@ -125,9 +111,6 @@ func DecodeCreateOrUpdateResult(_ context.Context, r *http.Request) (interface{}
 		}
 		request.ID = id
 	}
-	request.BarberId = barberIdValue
-	request.UserId = cusIdValue
-	request.BookingId = bookingIdValue
 	return request, nil
 }
 

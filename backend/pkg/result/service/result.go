@@ -31,9 +31,6 @@ func (r ResultService) UpdateResult(ctx context.Context, result api.CreateOrUpda
 	}
 	r.repository.UpdateResult(ctx, entity.Result{
 		Id:          result.ID,
-		BarberId:    result.BarberId,
-		UserId:      result.UserId,
-		BookingId:   result.BookingId,
 		Description: result.Description,
 		UpdatedAt:   ts.Unix(),
 	})

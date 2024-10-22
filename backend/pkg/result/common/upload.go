@@ -2,12 +2,13 @@ package common
 
 import (
 	"context"
+	"fmt"
+	"github.com/cloudinary/cloudinary-go/v2"
 	"log"
 	logV "log"
 	"mime/multipart"
 	"os"
-
-	"github.com/cloudinary/cloudinary-go/v2"
+	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2/api"
 	"github.com/cloudinary/cloudinary-go/v2/api/admin"
@@ -38,9 +39,13 @@ func UploadImageToCloud(file multipart.File) (string, error) {
 	uploadResult, err := cld.Upload.Upload(
 		ctx,
 		file,
-		uploader.UploadParams{PublicID: "models",
-			UniqueFilename: api.Bool(false),
-			Overwrite:      api.Bool(true)})
+		uploader.UploadParams{
+			//set id of image
+			PublicID:       fmt.Sprintf("%d", time.Now().Unix()),
+			UniqueFilename: api.Bool(true),
+			Overwrite:      api.Bool(true),
+			Invalidate:     api.Bool(true),
+		})
 	if err != nil {
 		log.Fatalf("Failed to upload file, %v\n", err)
 	}
