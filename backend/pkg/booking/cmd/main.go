@@ -125,12 +125,19 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	UpdateBookingTimeslotHandler := httptransport.NewServer(
+		transport.MakeUpdateBookingTimeslotEndpoints(svc),
+		transport.DecodeUpdateBookingTimeslotRequest,
+		transport.EncodeResponse,
+	)
+
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/booking/create", middleware.JWTMiddleware(CreateBookingHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/create-kafka", middleware.JWTMiddleware(CreateBookingKafkaHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/update", middleware.JWTMiddlewareBarber(UpdateBookingHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/update-booking-service", middleware.JWTMiddlewareBarber(UpdateBookingServiceHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/booking/update-booking-timeslot", middleware.JWTMiddlewareBarber(UpdateBookingTimeslotHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/get-by-id", middleware.JWTMiddleware(GetBookingHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/booking/get-list", middleware.JWTMiddleware(GetListBookingHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/booking/find", middleware.JWTMiddlewareGetListBooking(FindBookingHandler, connGrpcAccount)).Methods("POST")

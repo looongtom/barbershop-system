@@ -163,6 +163,16 @@ func MakeUpdateBookingServiceEndpoints(svc booking.BookingService) endpoint.Endp
 	}
 }
 
+func MakeUpdateBookingTimeslotEndpoints(svc booking.BookingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.UpdateBookingTimeslotRequest)
+		err := svc.UpdateBookingTimeslot(ctx, req)
+		return Response{
+			Message: "success",
+		}, err
+	}
+}
+
 func DecodeCreateBookingRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
 	var req api.BookingRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -219,6 +229,15 @@ func DecodeUpdateBookingRequest(ctx context.Context, r *http.Request) (request i
 
 func DecodeUpdateBookingServiceRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
 	var req api.UpdateBookingServiceRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func DecodeUpdateBookingTimeslotRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
+	var req api.UpdateBookingTimeslotRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err

@@ -42,6 +42,11 @@ type UpdateBookingServiceRequest struct {
 	ListServiceId []int `json:"list_service"`
 }
 
+type UpdateBookingTimeslotRequest struct {
+	Id         int `json:"id"`
+	TimeslotId int `json:"timeslot_id"`
+}
+
 type FindBookingRequest struct {
 	CustomerId int `json:"customerId"`
 	BarberId   int `json:"barberId"`

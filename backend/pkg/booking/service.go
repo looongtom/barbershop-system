@@ -11,7 +11,8 @@ type BookingService interface {
 	GetBooking(ctx context.Context, id string) (interface{}, error)
 	GetListBooking(ctx context.Context, page, pageSize int) (int, interface{}, error)
 	UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (interface{}, error)
-	UpdateBookingService(ctx context.Context, booking api.UpdateBookingServiceRequest) error
+	UpdateBookingService(ctx context.Context, updateBooking api.UpdateBookingServiceRequest) error
+	UpdateBookingTimeslot(ctx context.Context, updateBooking api.UpdateBookingTimeslotRequest) error
 
 	FindBookingByUser(ctx context.Context, findReq api.FindListBookingRequest) (int, interface{}, error)
 	FindBookingByBarber(ctx context.Context, findReq api.FindListBookingRequest) (int, interface{}, error)
