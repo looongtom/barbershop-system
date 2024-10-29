@@ -96,20 +96,20 @@ func (t TimeSlotService) CreateOrUpdateTimeSlot(ctx context.Context, timeslot ap
 			if timeslot.Status == "" || &timeslot.Status == nil {
 				timeslot.Status = existedTimeslot.Status
 			}
-			if &timeslot.BarberId == nil {
+			if timeslot.BarberId == 0 || &timeslot.BarberId == nil {
 				timeslot.BarberId = existedTimeslot.BarberId
 			}
-			ok, err := t.repository.CheckAvailableTimeSlot(ctx, api.CheckExistedTimeslotRequest{
-				BarberId:   timeslot.BarberId,
-				StartTime:  timeslot.StartTime,
-				BookedDate: timeslot.BookedDate,
-			})
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return nil, err
-			}
-			if ok {
-				return nil, errors.New(api.ErrTimeslotAlreadyExist)
-			}
+			//ok, err := t.repository.CheckAvailableTimeSlot(ctx, api.CheckExistedTimeslotRequest{
+			//	BarberId:   timeslot.BarberId,
+			//	StartTime:  timeslot.StartTime,
+			//	BookedDate: timeslot.BookedDate,
+			//})
+			//if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			//	return nil, err
+			//}
+			//if ok {
+			//	return nil, errors.New(api.ErrTimeslotAlreadyExist)
+			//}
 			resp, err := t.repository.UpdateTimeSlot(ctx, timeslot)
 			if err != nil {
 				return nil, err

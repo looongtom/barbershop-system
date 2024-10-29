@@ -25,6 +25,10 @@ type KafkaBookingRequest struct {
 	ListServiceId []int   `json:"list_service"`
 }
 
+type GetBookingByIdRequest struct {
+	Id int `json:"id"`
+}
+
 type UpdateBookingRequest struct {
 	Id            int     `json:"id"`
 	CustomerID    int     `json:"customer_id"`

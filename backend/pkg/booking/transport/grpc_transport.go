@@ -13,6 +13,11 @@ type GRPCServer struct {
 	createBooking gt.Handler
 }
 
+func (G GRPCServer) GetBookingById(ctx context.Context, request *pb.GetBookingByIdRequest) (*pb.Booking, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (G GRPCServer) CreateBooking(ctx context.Context, request *pb.BookingRequest) (*pb.Booking, error) {
 	_, resp, err := G.createBooking.ServeGRPC(ctx, request)
 	if err != nil {

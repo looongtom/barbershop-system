@@ -34,3 +34,4 @@ go.work
 
 #ignore go.mod
 go.mod
+/backend/pkg/booking/out

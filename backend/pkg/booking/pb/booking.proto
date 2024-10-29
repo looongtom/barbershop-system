@@ -25,6 +25,11 @@ message BookingRequest{
   repeated int32 list_service_id = 6;
 }
 
+message GetBookingByIdRequest{
+  int32 id=1;
+}
+
 service BookingService{
   rpc CreateBooking(BookingRequest) returns (Booking){};
+  rpc GetBookingById(GetBookingByIdRequest) returns (Booking){};
 }

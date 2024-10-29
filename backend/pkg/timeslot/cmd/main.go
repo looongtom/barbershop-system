@@ -83,7 +83,7 @@ func main() {
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/timeslot/find", GetListTimeSlotByBarberIdHandler).Methods("POST")
-	r.Handle("/timeslot/create-or-update", middleware.JWTMiddlewareAdmin(CreateOrUpdateTimeslotHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/timeslot/create-or-update", middleware.JWTMiddlewareBarber(CreateOrUpdateTimeslotHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/timeslot/create-by-list", CreateListTimeslotHandler).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8003")
