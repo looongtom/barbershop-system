@@ -104,12 +104,6 @@ async function createBarber(event) {
     event.preventDefault();
     const form = document.getElementById('createBarberForm');
     const formData = new FormData(form);
-    console.log('username',formData.get('username'))
-    console.log('email',formData.get('email'))
-    console.log('phoneNumber',formData.get('phoneNumber'))
-    console.log('fullName',formData.get('fullName'))
-    console.log('dob',formData.get('dob'))
-    console.log('role',formData.get('role'))
 
 
     // Append additional fields if necessary
@@ -117,16 +111,14 @@ async function createBarber(event) {
     formData['email']=formData.get('email');
     formData['phoneNumber']=formData.get('phoneNumber');
     formData['fullName']=formData.get('fullName'); //encode to UTF-8
-    
     formData['dob']=formData.get('dob');
-    formData['role']=2;
     formData['password']=formData.get('password');
 
-    
-    console.log(formData);
+    formData.set('role', '2');
 
-    const requestBody = JSON.stringify(Object.fromEntries(formData.entries()));
-
+    const dataObject = Object.fromEntries(formData.entries());
+    dataObject.role = parseInt(dataObject.role, 10);
+    const requestBody = JSON.stringify(dataObject);
 
     const apiUrl = 'http://localhost:8008/auth/register'; // Replace with your actual API URL
 
@@ -143,9 +135,19 @@ async function createBarber(event) {
             throw new Error('Network response was not ok');
         }
 
-        const data = await response.json();
-        console.log('Barber created successfully:', data);
-        fetchData(); // Refresh the barber list
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Barber created successfully:', data);
+            // close the modal
+            const createBarberModal = bootstrap.Modal.getInstance(document.getElementById('createBarberModal'));
+            if (createBarberModal) {
+                createBarberModal.hide();
+            }            // display success message alert
+            alert("Barber created successfully");
+
+            
+            fetchData(); // Refresh the barber list
+        }
     } catch (error) {
         console.error('Error creating barber:', error);
     }
