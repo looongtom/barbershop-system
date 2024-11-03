@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Try on Hairstyle Form</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .box {
+            border: 1px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .box input[type="file"] {
+            display: none;
+        }
+
+        .box label {
+            display: block;
+            padding: 40px 0;
+            color: #888;
+            cursor: pointer;
+        }
+
+        .optional {
+            font-size: 0.8em;
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .preview {
+            border: 1px dashed #ccc;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .advanced-options, button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container my-5">
+    <h1 class="text-center mb-4">Try on Hairstyle Form</h1>
+    
+    <div class="row">
+        <!-- Left Column: Source, Shape, and Color Photos -->
+        <div class="col-lg-6 col-md-12">
+            <div class="box">
+                <span>Source photo to try on the hairstyle</span>
+                <label for="image1">Drop Image Here<br>– or –<br>Click to Upload</label>
+                <input type="file" id="image1" accept="image/*" onchange="displayImage(event, 'image1Preview')">
+                <img id="image1Preview" style="display:none; width: 100%; margin-top: 10px;margin-left: auto;margin-right: auto;">
+            </div>
+
+            <div class="box">
+                <span>Shape photo with desired hairstyle <span class="optional">(optional)</span></span>
+                <label for="image2">Drop Image Here<br>– or –<br>Click to Upload</label>
+                <input type="file" id="image2" accept="image/*" onchange="displayImage(event, 'image2Preview')">
+                <img id="image2Preview" style="display:none; width: 100%; margin-top: 10px; margin-left: auto;margin-right: auto;">
+            </div>
+
+            <div class="box">
+                <span>Color photo with desired hair color <span class="optional">(optional)</span></span>
+                <label for="image3">Drop Image Here<br>– or –<br>Click to Upload</label>
+                <input type="file" id="image3" accept="image/*" onchange="displayImage(event, 'image3Preview')">
+                <img id="image3Preview" style="display:none; width: 100%; margin-top: 10px; margin-left: auto;margin-right: auto;">
+            </div>
+        </div>
+
+        <!-- Right Column: Your result image -->
+        <div class="col-lg-6 col-md-12">
+            <div class="preview">
+                <span>Your result</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-check mb-3 advanced-options">
+                <input class="form-check-input" type="checkbox" id="advancedToggle">
+                <label class="form-check-label" for="advancedToggle">
+                    Advanced Options
+                </label>
+            </div>
+            <button type="button" class="btn btn-primary w-100" onclick="getHaircut()">Get the haircut</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/preview.js"></script>
+
+</body>
+</html>
