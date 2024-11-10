@@ -117,12 +117,13 @@ func main() {
 	r.Handle("/servicing/category/get-list", middleware.JWTMiddleware(GetListCategoryHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/servicing/service/get-list", middleware.JWTMiddleware(GetListServiceHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/servicing/service/get-list-v2", middleware.JWTMiddleware(GetListServiceAndCategoryHandler, connGrpcAccount)).Methods("GET")
+	r.Handle("/servicing/service/get-list-test", GetListServiceAndCategoryHandler).Methods("GET")
 
 	r.Handle("/servicing/category/get", middleware.JWTMiddleware(GetCategoryHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/servicing/service/get", middleware.JWTMiddleware(GetServiceHandler, connGrpcAccount)).Methods("GET")
 
-	logger.Log("msg", "HTTP", "addr", ":8001")
-	logger.Log("err", http.ListenAndServe(":8001", nil))
+	logger.Log("msg", "HTTP", "addr", ":8009")
+	logger.Log("err", http.ListenAndServe(":8009", nil))
 
 }
 

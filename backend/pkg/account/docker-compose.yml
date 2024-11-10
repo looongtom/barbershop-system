@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "8008:8008"
     environment:
       - MONGO_URI=mongodb://mongo:2717/user_management
       - DB_USER=postgres
@@ -28,6 +28,8 @@ services:
       - mongo
       - redis
       - postgres
+    networks:
+      - kong-network
 
   mongo:
     image: mongo:latest
@@ -36,12 +38,16 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: tom
       MONGO_INITDB_ROOT_PASSWORD: 123456
+    networks:
+      - kong-network
 
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
     command: ["redis-server", "--requirepass", "mysecretpassword"]
+    networks:
+      - kong-network
 
   postgres:
     image: postgres:latest
@@ -51,3 +57,60 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: tr1nhtu@n
       POSTGRES_DB: barber_management
+    networks:
+      - kong-network
+
+  # Kong database service
+  kong-database:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kongpass
+    networks:
+      - kong-network
+    ports:
+      - "5433:5432"
+
+  kong-migrations:
+    image: kong:3.7.0
+    depends_on:
+      - kong-database
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PASSWORD: kongpass
+    command: ["kong", "migrations", "bootstrap"]
+    networks:
+      - kong-network
+
+  # Kong API Gateway service
+  kong:
+    image: kong:3.7.0
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kongpass
+      KONG_PG_DATABASE: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    ports:
+      - "8000:8000"  # Kong Proxy Port
+      - "8443:8443"
+      - "8001:8001"  # Kong Admin Port
+      - "8002:8002"  # Kong GUI Port
+      - "8444:8444"
+    depends_on:
+      - kong-database
+      - kong-migrations
+    networks:
+      - kong-network
+
+networks:
+  kong-network:
+    driver: bridge

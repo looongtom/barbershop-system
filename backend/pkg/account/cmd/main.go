@@ -153,8 +153,8 @@ func main() {
 	//r.Handle("/login", http.HandlerFunc(transport.HandleGoogleLogin)).Methods("GET")
 	//r.Handle("/callback", http.HandlerFunc(transport.HandleGoogleCallback)).Methods("GET")
 
-	logger.Log("msg", "HTTP", "addr", ":8000")
-	logger.Log("err", http.ListenAndServe(":8000", nil))
+	logger.Log("msg", "HTTP", "addr", ":8008")
+	logger.Log("err", http.ListenAndServe(":8008", nil))
 
 	// Keep the main function running
 	select {}

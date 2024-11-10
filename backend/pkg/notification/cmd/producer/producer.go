@@ -1,14 +1,13 @@
 package main
 
 import (
+	"DoAn/pkg/models"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-
-	"DoAn/pkg/notification/pkg/models"
 
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"

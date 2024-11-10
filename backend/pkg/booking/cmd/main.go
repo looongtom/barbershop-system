@@ -142,8 +142,8 @@ func main() {
 	r.Handle("/booking/get-list", middleware.JWTMiddleware(GetListBookingHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/booking/find", middleware.JWTMiddlewareGetListBooking(FindBookingHandler, connGrpcAccount)).Methods("POST")
 
-	logger.Log("msg", "HTTP", "addr", ":8002")
-	logger.Log("err", http.ListenAndServe(":8002", nil))
+	logger.Log("msg", "HTTP", "addr", ":8010")
+	logger.Log("err", http.ListenAndServe(":8010", nil))
 }
 
 func addCorsHeaders(handler http.Handler) http.Handler {

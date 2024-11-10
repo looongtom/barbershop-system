@@ -1,36 +1,22 @@
-# Use the official Golang image as the base image
-FROM golang:1.20-alpine
+FROM golang:1.23-alpine AS builder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum files
-COPY go.mod go.sum ./
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+COPY go.mod .
 RUN go mod download
 
-# Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -o ./cmd/apiserver ./cmd/main.go
 
-COPY ./pb/account.proto .
 
-RUN protoc --go_out=. --go_opt=paths=source_relative account.proto protoc --go-
-RUN protoc --go_out=. --go_opt=paths=source_relative account.proto protoc --go-grpc_out=require_unimplemented_servers=false:. --go-grpc_opt=paths=source_relative account.proto
+FROM scratch
 
-# Copy the account.env file to the Working Directory inside the container
-COPY account.env .
+# Copy binary and config files from /build to root folder of scratch container.
+COPY --from=builder /app/cmd/apiserver /
+COPY /cmd/account.env .
 
-# Build the Go app
-RUN go build -o main ./cmd/main.go
-RUN go build -o grpc_server ./grpc/grpc_server.go
-
-# Expose port 8000 to the outside world
-EXPOSE 8000
-EXPOSE 9090
-
-COPY start.sh .
-
-# Command to run the executable
-CMD ["sh", "start.sh"]
+# Command to run when starting the container.
+ENTRYPOINT ["/apiserver"]
