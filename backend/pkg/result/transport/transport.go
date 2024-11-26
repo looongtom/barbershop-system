@@ -1,14 +1,15 @@
 package transport
 
 import (
-	"DoAn"
-	"DoAn/api"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	result "DoAn"
+	"DoAn/api"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -90,7 +91,7 @@ func MakeGetResultByBookingIdEndpoints(svc result.ResultService) endpoint.Endpoi
 func DecodeCreateOrUpdateResult(_ context.Context, r *http.Request) (interface{}, error) {
 	var request api.CreateOrUpdateResult
 	r.ParseMultipartForm(10 << 20)
-	//get list image
+	// get list image
 	files := r.MultipartForm.File["list_img"]
 	for _, file := range files {
 		f, err := file.Open()
@@ -110,6 +111,36 @@ func DecodeCreateOrUpdateResult(_ context.Context, r *http.Request) (interface{}
 			return nil, ok
 		}
 		request.ID = id
+	}
+
+	idBarber := r.FormValue("barber_id")
+	if idBarber != "" && &idBarber != nil {
+		idBarberValue, ok := strconv.Atoi(idBarber)
+		if ok != nil {
+			fmt.Println("Error Retrieving barber_id")
+			return nil, ok
+		}
+		request.BarberId = idBarberValue
+	}
+
+	idUser := r.FormValue("user_id")
+	if idUser != "" && &idUser != nil {
+		idUserValue, ok := strconv.Atoi(idUser)
+		if ok != nil {
+			fmt.Println("Error Retrieving user_id")
+			return nil, ok
+		}
+		request.UserId = idUserValue
+	}
+
+	idBooking := r.FormValue("booking_id")
+	if idBooking != "" && &idBooking != nil {
+		idBookingValue, ok := strconv.Atoi(idBooking)
+		if ok != nil {
+			fmt.Println("Error Retrieving user_id")
+			return nil, ok
+		}
+		request.BookingId = idBookingValue
 	}
 	return request, nil
 }

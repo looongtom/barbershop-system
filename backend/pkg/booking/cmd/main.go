@@ -1,7 +1,7 @@
 package main
 
 import (
-	"DoAn"
+	booking "DoAn"
 	"DoAn/database"
 	repository "DoAn/db"
 	"DoAn/middleware"
@@ -23,7 +23,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const (
+var (
 	kafkaBrokerServer = "localhost:9092"
 )
 
@@ -33,7 +33,8 @@ func main() {
 		logV.Fatalln("Error getting env, %v", err)
 	}
 	logger := log.NewLogfmtLogger(os.Stderr)
-	//collectionMongo := database.ConnectMongo(os.Getenv("TokenCollectionMongo"))
+	kafkaBrokerServer = os.Getenv("KAFKA_BROKER")
+	// collectionMongo := database.ConnectMongo(os.Getenv("TokenCollectionMongo"))
 	collectionPostgres, err := database.ConnectPostgresBooking()
 	if err != nil {
 		logV.Fatalf("Error getting env, %v", err)

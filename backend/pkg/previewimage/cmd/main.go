@@ -8,7 +8,7 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 
-	"DoAn"
+	previewimage "DoAn"
 	"DoAn/database"
 	repository "DoAn/db"
 	"DoAn/middleware"
@@ -24,7 +24,7 @@ import (
 	"github.com/go-kit/kit/log"
 )
 
-const (
+var (
 	kafkaBroker = "localhost:9092"
 )
 
@@ -33,6 +33,8 @@ func main() {
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}
+
+	kafkaBroker = os.Getenv("KAFKA_BROKER")
 	logger := log.NewLogfmtLogger(os.Stderr)
 	collectionPostgres, err := database.ConnectPostgresPreviewImage()
 	if err != nil {

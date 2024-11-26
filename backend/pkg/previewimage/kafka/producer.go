@@ -21,13 +21,13 @@ func ProduceMessage(p *kafka.Producer, topic string, message []byte) error {
 
 	}
 	// Wait for delivery report or error
-	e := <-deliveryChan
-	m := e.(*kafka.Message)
-	// Check for delivery errors
-	if m.TopicPartition.Error != nil {
-		return fmt.Errorf("delivery failed: %s", m.TopicPartition.Error)
-	}
-	// Close the delivery channel
-	close(deliveryChan)
+	// e := <-deliveryChan
+	// m := e.(*kafka.Message)
+	// // Check for delivery errors
+	// if m.TopicPartition.Error != nil {
+	// 	return fmt.Errorf("delivery failed: %s", m.TopicPartition.Error)
+	// }
+	// // Close the delivery channel
+	// close(deliveryChan)
 	return nil
 }

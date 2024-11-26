@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/joho/godotenv"
 	"io"
 	"log"
 	logV "log"
@@ -15,10 +13,13 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/joho/godotenv"
+
 	"DoAn/api"
 )
 
-const (
+var (
 	groupPreviewImageID     = "preview_img-group"
 	topicPreviewImage       = "preview_img"
 	kafkaBrokerPreviewImage = "localhost:9092"
@@ -32,6 +33,8 @@ func main() {
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}
+
+	kafkaBrokerPreviewImage = os.Getenv("KAFKA_BROKER")
 
 	kafkaBrokerServer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBrokerPreviewImage})
 	if err != nil {
@@ -94,7 +97,7 @@ func main() {
 				}
 				fmt.Printf("Received previewImg: %+v\n", previewImg)
 				// call another api
-				//CallAnotherAPI(previewImg)
+				// CallAnotherAPI(previewImg)
 
 				// Produce the message to the Kafka topic
 				serializedPreviewImage, err := json.Marshal(previewImg)

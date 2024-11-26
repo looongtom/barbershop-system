@@ -1,14 +1,9 @@
 package main
 
 import (
-	"DoAn/api"
-	kafka2 "DoAn/kafka"
-	"DoAn/pb"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"google.golang.org/grpc"
 	"log"
 	logV "log"
 	"net/http"
@@ -17,17 +12,80 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/websocket"
+	"google.golang.org/grpc"
+
+	"DoAn/api"
+	"DoAn/database"
+	"DoAn/entity"
+	kafka2 "DoAn/kafka"
+	"DoAn/pb"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/joho/godotenv"
 )
 
-const (
+var (
 	groupID      = "booking-group"
 	topic        = "booking"
-	replyTopic   = "reply"
 	kafkaBroker  = "localhost:9092"
 	websocketURL = "ws://localhost:8080/trigger_booking"
 )
+
+const (
+	titleSuccessBooking = "Booking successfully"
+	titleFailBooking    = "Booking failed"
+	title               = "Choose to view more detail"
+	typeNoti            = "booking"
+)
+
+func saveNotificationToMongo(bookingResp api.BookingResponse) error {
+	var titleNoti string
+	switch bookingResp.Status {
+	case "Booked":
+		titleNoti = titleSuccessBooking
+	default:
+		titleNoti = titleFailBooking
+	}
+	encodeBooking, err := json.Marshal(bookingResp)
+	if err != nil {
+		fmt.Printf("Failed to encode booking: %s\n", err)
+		encodeBooking = nil
+	}
+
+	noti := entity.Notification{
+		UserId:    bookingResp.CustomerID,
+		Title:     titleNoti,
+		Message:   title,
+		Type:      typeNoti,
+		Timestamp: bookingResp.CreatedAt,
+		RawData:   encodeBooking,
+		IsRead:    false,
+	}
+	// Save notification to MongoDB
+	err = database.SaveNotification(noti)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Saved notification to MongoDB: %+v\n", noti)
+
+	noti2 := entity.Notification{
+		UserId:    bookingResp.BarberId,
+		Title:     titleNoti,
+		Message:   title,
+		Type:      typeNoti,
+		Timestamp: bookingResp.CreatedAt,
+		RawData:   encodeBooking,
+		IsRead:    false,
+	}
+	// Save notification to MongoDB
+	err = database.SaveNotification(noti2)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Saved notification to MongoDB: %+v\n", noti2)
+	return nil
+}
 
 func sendKafkaResponse(kaf *kafka.Producer, createBooking *pb.Booking, topic, uuid string) {
 
@@ -113,6 +171,8 @@ func main() {
 		logV.Fatalln("Error getting env, %v", err)
 	}
 
+	kafkaBroker = os.Getenv("KAFKA_BROKER")
+
 	kafkaBrokerServer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBroker})
 	if err != nil {
 		fmt.Printf("Failed to create producer: %s\n", err)
@@ -127,12 +187,12 @@ func main() {
 	}
 	client := pb.NewBookingServiceClient(connGrpcBooking)
 
-	//connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
-	//if err != nil {
+	// connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
+	// if err != nil {
 	//	fmt.Printf("did not connect: %v", err)
 	//	logV.Fatalf("Error getting env, %v", err)
-	//}
-	//client := pb.NewBookingServiceClient(connGrpcBooking)
+	// }
+	// client := pb.NewBookingServiceClient(connGrpcBooking)
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": kafkaBroker,
@@ -203,12 +263,12 @@ func main() {
 						SlotId:     booking.SlotId,
 						FeedBackId: booking.FeedBackId,
 						CreatedAt:  time.Now().Unix(),
-						//ListServices: convertInt32ToString(resp.ListServiceId),
+						// ListServices: convertInt32ToString(resp.ListServiceId),
 					})
 					continue
 				}
 				fmt.Printf("Created booking successfully: %+v\n", resp)
-				sendToWebSocket(api.BookingResponse{
+				successBookingResp := api.BookingResponse{
 					ID:         int(resp.Id),
 					CustomerID: int(resp.CustomerId),
 					BarberId:   int(resp.BarberId),
@@ -219,8 +279,13 @@ func main() {
 					FeedBackId: int(resp.FeedbackId),
 					CreatedAt:  int64(resp.CreatedAt),
 					UpdatedAt:  int64(resp.UpdatedAt),
-					//ListServices: convertInt32ToString(resp.ListServiceId),
-				})
+					// ListServices: convertInt32ToString(resp.ListServiceId),
+				}
+				sendToWebSocket(successBookingResp)
+				err = saveNotificationToMongo(successBookingResp)
+				if err != nil {
+					fmt.Printf("Failed to save notification to MongoDB: %s\n", err)
+				}
 
 			case kafka.Error:
 				// Handle Kafka errors

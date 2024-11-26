@@ -1,22 +1,24 @@
 package main
 
 import (
-	"DoAn/api"
 	"encoding/json"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
 	"log"
 	logV "log"
 	"net/http"
 	"os"
 	"os/signal"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
+
+	"DoAn/api"
 )
 
 const websocketURL = "ws://localhost:8080/trigger_hairfast" // Assuming WebSocket server is on the same machine
 
-const (
+var (
 	groupPreviewImageID     = "my_consumer_group"
 	topicPreviewImage       = "preview_img"
 	kafkaBrokerPreviewImage = "localhost:9092"
@@ -53,6 +55,8 @@ func main() {
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
 	}
+
+	kafkaBrokerPreviewImage = os.Getenv("KAFKA_BROKER")
 
 	kafkaBrokerServer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBrokerPreviewImage})
 	if err != nil {
@@ -115,7 +119,7 @@ func main() {
 				}
 				fmt.Printf("Received booking: %+v\n", hairfastResult)
 				// call another api
-				//CallAnotherAPI(previewImg)
+				// CallAnotherAPI(previewImg)
 				sendToWebSocket(hairfastResult)
 
 			case kafka.Error:
