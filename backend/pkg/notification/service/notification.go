@@ -1,6 +1,7 @@
 package service
 
 import (
+	"DoAn/api"
 	"context"
 
 	"github.com/go-kit/kit/log"
@@ -13,8 +14,8 @@ type NotificationStruct struct {
 	logger     log.Logger
 }
 
-func (n NotificationStruct) GetNotification(ctx context.Context, userId int) (interface{}, error) {
-	listNotification, err := n.repository.GetNotification(ctx, userId)
+func (n NotificationStruct) GetNotification(ctx context.Context, request api.GetListNotificationRequest) (interface{}, error) {
+	listNotification, err := n.repository.GetNotification(ctx, request)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ type getListNotificationResponse struct {
 func MakeGetListNotificationEndpoints(svc notification.NotificationService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.GetListNotificationRequest)
-		resp, err := svc.GetNotification(ctx, req.UserId)
+		resp, err := svc.GetNotification(ctx, req)
 		if err != nil {
 			return getListNotificationResponse{nil, err.Error()}, nil
 		}

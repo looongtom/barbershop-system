@@ -1,6 +1,7 @@
 package db
 
 import (
+	"DoAn/api"
 	"context"
 
 	"github.com/go-kit/kit/log"
@@ -15,9 +16,15 @@ type repo struct {
 	logger     log.Logger
 }
 
-func (r repo) GetNotification(ctx context.Context, userId int) ([]entity.Notification, error) {
+func (r repo) GetNotification(ctx context.Context, req api.GetListNotificationRequest) ([]entity.Notification, error) {
 	var resp []entity.Notification
-	cursor, err := r.collection.Find(ctx, map[string]interface{}{"user_id": userId})
+	cursor, err := r.collection.Find(ctx, map[string]interface{}{
+		"user_id": req.UserId,
+		"timestamp": map[string]interface{}{
+			"$gte": req.StartTime,
+			"$lte": req.EndTime,
+		},
+	})
 	if err != nil {
 		r.logger.Log("error", err)
 		return nil, err
