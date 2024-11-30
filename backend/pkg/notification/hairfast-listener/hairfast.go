@@ -8,12 +8,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 
 	"DoAn/api"
+	"DoAn/database"
+	"DoAn/entity"
 )
 
 const websocketURL = "ws://localhost:8080/trigger_hairfast" // Assuming WebSocket server is on the same machine
@@ -25,6 +28,40 @@ var (
 
 	hairfastResultTopic = "result_hairfast"
 )
+
+const (
+	titleSuccessGenerate = "Generate successfully"
+	titleFailGenerate    = "Generate failed"
+	title                = "Choose to view more detail"
+	typeNoti             = "hairfast"
+)
+
+func saveNotificationToMongo(result api.HairFastResult) error {
+	titleNoti := titleSuccessGenerate
+	if result.GeneratedImgCloud == "" {
+		titleNoti = titleFailGenerate
+	}
+	encodeResult, err := json.Marshal(result)
+	if err != nil {
+		fmt.Printf("Failed to encode booking: %s\n", err)
+		encodeResult = nil
+	}
+	noti := entity.Notification{
+		UserId:    1, // TODO: Hardcoded for now
+		Title:     titleNoti,
+		Message:   title,
+		Type:      typeNoti,
+		Timestamp: time.Now().Unix(),
+		RawData:   encodeResult,
+		IsRead:    false,
+	}
+	err = database.SaveNotification(noti)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Saved notification to MongoDB: %+v\n", noti)
+	return nil
+}
 
 func sendToWebSocket(result api.HairFastResult) {
 	resultJSON, err := json.Marshal(result)
@@ -57,6 +94,7 @@ func main() {
 	}
 
 	kafkaBrokerPreviewImage = os.Getenv("KAFKA_BROKER")
+	fmt.Printf("Kafka broker: %s\n", kafkaBrokerPreviewImage)
 
 	kafkaBrokerServer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBrokerPreviewImage})
 	if err != nil {
@@ -121,6 +159,10 @@ func main() {
 				// call another api
 				// CallAnotherAPI(previewImg)
 				sendToWebSocket(hairfastResult)
+				err = saveNotificationToMongo(hairfastResult)
+				if err != nil {
+					fmt.Printf("Failed to save notification to MongoDB: %s\n", err)
+				}
 
 			case kafka.Error:
 				// Handle Kafka errors

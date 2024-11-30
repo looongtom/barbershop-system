@@ -35,7 +35,7 @@ func main() {
 	}
 
 	kafkaBrokerPreviewImage = os.Getenv("KAFKA_BROKER")
-
+	fmt.Printf("Kafka broker: %s\n", kafkaBrokerPreviewImage)
 	kafkaBrokerServer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBrokerPreviewImage})
 	if err != nil {
 		fmt.Printf("Failed to create producer: %s\n", err)

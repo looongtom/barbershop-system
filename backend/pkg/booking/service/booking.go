@@ -1,7 +1,6 @@
 package service
 
 import (
-	"DoAn/mapper"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"DoAn"
+	booking "DoAn"
+	"DoAn/mapper"
+
 	"DoAn/api"
 	kafka2 "DoAn/kafka"
 	"DoAn/pb"
@@ -281,16 +282,16 @@ func (b BookingStruct) CreateBooking(ctx context.Context, booking api.BookingReq
 		errMsg := err.Error()
 		return errMsg, err
 	}
-	//serializedBooking, err := json.Marshal(resp)
-	//if err != nil {
+	// serializedBooking, err := json.Marshal(resp)
+	// if err != nil {
 	//	b.logger.Log("Failed to serialize booking request: %s\n", err)
 	//	return nil, err
-	//}
-	//err = kafka2.ProduceMessage(b.kafka, bookingTopic, serializedBooking)
-	//if err != nil {
+	// }
+	// err = kafka2.ProduceMessage(b.kafka, bookingTopic, serializedBooking)
+	// if err != nil {
 	//	b.logger.Log("Failed to produce message: %s\n", err)
 	//	return nil, err
-	//}
+	// }
 
 	err = b.repository.CreateBookingDetail(ctx, booking.ListServiceId, resp.ID)
 	if err != nil {
@@ -580,8 +581,8 @@ func (b BookingStruct) UpdateBooking(ctx context.Context, booking api.UpdateBook
 		return errMsg, err
 	}
 
-	//compare listIdServices and booking.ListServiceId
-	//if not equal, update booking detail service
+	// compare listIdServices and booking.ListServiceId
+	// if not equal, update booking detail service
 	if len(listIdServices) != len(booking.ListServiceId) {
 		err = b.repository.UpdateBookingDetailService(ctx, booking.ListServiceId, booking.Id)
 		if err != nil {
@@ -589,8 +590,8 @@ func (b BookingStruct) UpdateBooking(ctx context.Context, booking api.UpdateBook
 			return nil, err
 		}
 	} else {
-		//check if listIdServices and booking.ListServiceId are equal
-		//if not equal, update booking detail service
+		// check if listIdServices and booking.ListServiceId are equal
+		// if not equal, update booking detail service
 		if !compareListService(listIdServices, booking.ListServiceId) {
 			err = b.repository.UpdateBookingDetailService(ctx, booking.ListServiceId, booking.Id)
 			if err != nil {

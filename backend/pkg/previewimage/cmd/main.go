@@ -35,6 +35,7 @@ func main() {
 	}
 
 	kafkaBroker = os.Getenv("KAFKA_BROKER")
+	fmt.Printf("Kafka broker: %s\n", kafkaBroker)
 	logger := log.NewLogfmtLogger(os.Stderr)
 	collectionPostgres, err := database.ConnectPostgresPreviewImage()
 	if err != nil {

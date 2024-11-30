@@ -1,8 +1,11 @@
 package db
 
 import (
-	"DoAn/api"
 	"context"
+
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"DoAn/api"
 
 	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +27,9 @@ func (r repo) GetNotification(ctx context.Context, req api.GetListNotificationRe
 			"$gte": req.StartTime,
 			"$lte": req.EndTime,
 		},
-	})
+	}, options.Find().SetSort(map[string]interface{}{
+		"timestamp": -1,
+	}))
 	if err != nil {
 		r.logger.Log("error", err)
 		return nil, err
