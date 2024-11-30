@@ -35,3 +35,12 @@ func CreateTable(db sql.DB) (err error) {
 	}
 	return nil
 }
+
+func AlterTableAddColumn(db sql.DB) error {
+	query := `ALTER TABLE booking ADD COLUMN booked_date VARCHAR(255);`
+	_, err := db.Exec(query)
+	if err != nil {
+		return fmt.Errorf("failed to alter table: %v", err)
+	}
+	return nil
+}
