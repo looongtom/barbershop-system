@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log('Password:', password);
 
             // Replace with your API endpoint
-            const apiEndpoint = 'http://localhost:8008/auth/login';
+            const apiEndpoint = 'http://192.168.1.9:8008/auth/login';
 
             // Create the request payload
             const payload = {
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (event.target && event.target.id === 'logout-bt') {
             const token = localStorage.getItem('accessToken'); // Assuming the token is stored in localStorage
-            fetch('http://localhost:8008/auth/logout', {
+            fetch('http://192.168.1.9:8008/auth/logout', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
