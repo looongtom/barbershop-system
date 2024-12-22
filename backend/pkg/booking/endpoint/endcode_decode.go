@@ -1,10 +1,11 @@
 package endpoint
 
 import (
+	"context"
+
 	"DoAn/api"
 	"DoAn/entity"
 	"DoAn/pb"
-	"context"
 )
 
 func DecodeCreateBooking(ctx context.Context, i interface{}) (request interface{}, err error) {
@@ -20,6 +21,7 @@ func DecodeCreateBooking(ctx context.Context, i interface{}) (request interface{
 		Price:         req.Price,
 		SlotId:        int(req.SlotId),
 		ListServiceId: listServiceId,
+		BookedDate:    req.BookedDate,
 	}, nil
 }
 
@@ -34,5 +36,6 @@ func EncodeCreateBooking(ctx context.Context, i interface{}) (response interface
 		SlotId:     int32(resp.SlotId),
 		CreatedAt:  int32(resp.CreatedAt),
 		UpdatedAt:  int32(resp.UpdatedAt),
+		BookedDate: resp.BookedDate,
 	}, nil
 }

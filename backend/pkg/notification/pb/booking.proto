@@ -14,6 +14,7 @@ message Booking{
   int32 created_at=9;
   int32 updated_at=10;
   repeated int32 list_service_id = 11;
+  string booked_date=12;
 }
 
 message BookingRequest{
@@ -23,8 +24,14 @@ message BookingRequest{
   float price=4;
   int32  slot_id=5;
   repeated int32 list_service_id = 6;
+  string booked_date=7;
+}
+
+message GetBookingByIdRequest{
+  int32 id=1;
 }
 
 service BookingService{
   rpc CreateBooking(BookingRequest) returns (Booking){};
+  rpc GetBookingById(GetBookingByIdRequest) returns (Booking){};
 }

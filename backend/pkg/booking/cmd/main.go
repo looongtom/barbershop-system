@@ -43,10 +43,6 @@ func main() {
 	if err != nil {
 		logV.Fatalf("Error creating table: %v", err)
 	}
-	err = booking.AlterTableAddColumn(*collectionPostgres)
-	if err != nil {
-		logV.Fatalf("Error alter table: %v", err)
-	}
 	r := mux.NewRouter()
 
 	connGrpcAccount, err := grpc.NewClient(os.Getenv("GRPC_ACCOUNT_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))

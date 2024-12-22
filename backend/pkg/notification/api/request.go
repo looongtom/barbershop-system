@@ -49,7 +49,9 @@ type KafkaBookingRequest struct {
 	SlotId        int     `json:"slot_id"`
 	FeedBackId    int     `json:"feedback_id,omitempty"`
 	ListServiceId []int   `json:"list_service"`
+	BookedDate    string  `json:"booked_date"`
 }
+
 type BookingRequest struct {
 	CustomerID    int     `json:"customer_id"`
 	BarberId      int     `json:"barber_id"`
