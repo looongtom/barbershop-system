@@ -49,7 +49,7 @@ func scheduleDailyAt(hour, min, sec int, svc auth.AuthenService, task func(svc a
 }
 
 func main() {
-	//read the account.env file
+	// read the account.env file
 	err := godotenv.Load("account.env")
 	if err != nil {
 		logV.Fatalf("Error loading account.env file: %v", err)
@@ -73,7 +73,7 @@ func main() {
 		fmt.Printf("Error parsing scheduled time: %v\n", err)
 		return
 	}
-	//scheduledTime = time.Now().Add(5 * time.Second)
+	// scheduledTime = time.Now().Add(5 * time.Second)
 	fmt.Println("Scheduled time: ", scheduledTime)
 
 	if err != nil {
@@ -119,10 +119,10 @@ func main() {
 		transport.MakeGetProfileEndpoints(svc),
 		transport.DecodeGetProfileRequest,
 		transport.EncodeResponse)
-	//ChangePassFirstTimeHandler := httptransport.NewServer(
-	//	transport.MakeChangePassFirstTimeEndpoints(svc),
-	//	transport.DecodeChangePassFirstTimeRequest,
-	//	transport.EncodeResponse)
+	ChangePassFirstTimeHandler := httptransport.NewServer(
+		transport.MakeChangePassFirstTimeEndpoints(svc),
+		transport.DecodeChangePassFirstTimeRequest,
+		transport.EncodeResponse)
 	LogoutHandler := httptransport.NewServer(
 		transport.MakeLogoutEndpoints(authenSvc),
 		transport.DecodeEmptyRequest,
@@ -152,12 +152,12 @@ func main() {
 	r.Handle("/auth/refresh", middleware.JWTMiddlewareRefreshToken(RefreshHandler, authenSvc)).Methods("GET")
 	r.Handle("/auth/profile", middleware.JWTMiddleware(GetProfileHandler, authenSvc)).Methods("GET")
 	r.Handle("/auth/logout", middleware.JWTMiddleware(LogoutHandler, authenSvc)).Methods("POST")
-	//r.Handle("/auth/change-pass-first-time", ChangePassFirstTimeHandler).Methods("POST")
+	r.Handle("/auth/change-pass-first-time", middleware.JWTMiddleware(ChangePassFirstTimeHandler, authenSvc)).Methods("POST")
 	//
 	r.Handle("/login-oauth", http.HandlerFunc(transport.HandleMain)).Methods("GET")
 	r.Handle("/login", http.HandlerFunc(transport.HandleGoogleLogin)).Methods("GET")
-	//r.Handle("/callback", http.HandlerFunc(transport.HandleGoogleCallback)).Methods("GET")
-	r.Handle("/callback-google", GoogleCallbackHandler).Methods("GET")
+	// r.Handle("/callback", http.HandlerFunc(transport.HandleGoogleCallback)).Methods("GET")
+	r.Handle("/callback", GoogleCallbackHandler).Methods("GET")
 
 	logger.Log("msg", "HTTP", "addr", ":8008")
 	logger.Log("err", http.ListenAndServe(":8008", nil))

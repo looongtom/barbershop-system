@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/joho/godotenv"
-	"golang.org/x/oauth2/google"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"DoAn"
+	"github.com/joho/godotenv"
+	"golang.org/x/oauth2/google"
+
+	account "DoAn"
 	"DoAn/auth"
 	"DoAn/entity"
 	"DoAn/middleware"
@@ -31,7 +32,7 @@ var (
 )
 
 func init() {
-	err := godotenv.Load("./backend/pkg/account/cmd/account.env")
+	err := godotenv.Load("D:\\barbershop-system\\backend\\pkg\\account\\cmd\\account.env")
 	if err != nil {
 		log.Fatalln("Error loading account.env file")
 	}
@@ -39,7 +40,7 @@ func init() {
 	fmt.Println("GOOGLE_CLIENT_SECRET: ", os.Getenv("GOOGLE_CLIENT_SECRET"))
 
 	googleOauthConfig = &oauth2.Config{
-		RedirectURL:  "http://localhost:8000/callback-google",
+		RedirectURL:  "http://localhost:8008/callback",
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
@@ -52,8 +53,9 @@ type (
 		user entity.Account
 	}
 	ChangePassFirstTimeRequest struct {
-		Username string `json:"username,omitempty"`
-		Password string `json:"password"`
+		Username        string `json:"username,omitempty"`
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
 	}
 	RegisterUserResponse struct {
 		Msg string `json:"msg"`
@@ -155,24 +157,24 @@ func MakeGetListBarberEndpoints(u account.UserService) endpoint.Endpoint {
 	}
 }
 
-//	func MakeChangePassFirstTimeEndpoints(u account.UserService) endpoint.Endpoint {
-//		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-//			req := request.(ChangePassFirstTimeRequest)
-//			msg, err := u.ChangePassFirstTime(ctx, req.Username, req.Password)
-//			if err != nil {
-//				return Response{
-//					Message: err.Error(),
-//					Status:  500,
-//					Data:    nil,
-//				}, err
-//			}
-//			return Response{
-//				Message: msg.(string),
-//				Status:  200,
-//				Data:    nil,
-//			}, err
-//		}
-//	}
+func MakeChangePassFirstTimeEndpoints(u account.UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(ChangePassFirstTimeRequest)
+		msg, err := u.ChangePassFirstTime(ctx, req.Username, req.NewPassword)
+		if err != nil {
+			return Response{
+				Message: err.Error(),
+				Status:  500,
+				Data:    nil,
+			}, err
+		}
+		return Response{
+			Message: msg.(string),
+			Status:  200,
+			Data:    nil,
+		}, err
+	}
+}
 func MakeRefreshEndpoints(u auth.AuthenService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		token := request.(LogoutRequest)
@@ -301,41 +303,14 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 	}, nil
 }
 
-//	func DecodeChangePassFirstTimeRequest(_ context.Context, r *http.Request) (interface{}, error) {
-//		tokenString := r.Header.Get("Authorization")
-//		if tokenString == "" {
-//			return nil, errors.New("token is required")
-//		}
-//		userName, err := auth.GetSubjectFromToken(tokenString)
-//		if err != nil {
-//			return nil, err
-//		}
-//		tokenString = tokenString[len("Bearer "):]
-//		err = auth.VerifyToken(tokenString)
-//		if err != nil {
-//			return nil, err
-//		}
-//		collectionPostgres, err := database.ConnectPostgres()
-//		if err != nil {
-//			return nil, err
-//		}
-//		var result entity.Account
-//		err = collectionPostgres.QueryRow("SELECT id,username,email,role FROM account WHERE username=$1", userName).Scan(&result.ID, &result.Username, &result.Email, &result.Role)
-//		if err != nil {
-//			return nil, err
-//		}
-//		var request ChangePassFirstTimeRequest
-//		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-//			return nil, err
-//		}
-//		if govalidator.IsNull(request.Password) {
-//			return nil, errors.New("password is required")
-//		}
-//		if userName != request.Username {
-//			return nil, errors.New("username is invalid")
-//		}
-//		return request, nil
-//	}
+func DecodeChangePassFirstTimeRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var request ChangePassFirstTimeRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
 // func DecodeLogoutRequest(_ context.Context, r *http.Request) (interface{}, error) {
 //	tokenString := r.Header.Get("Authorization")
 //	if tokenString == "" {
@@ -378,7 +353,7 @@ func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-//func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
+// func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 //	w.Header().Set("Content-Type", "application/json")
 //
 //	token, email, username, err := getUserInfo(r.FormValue("state"), r.FormValue("code"))
@@ -456,9 +431,9 @@ func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 //	fmt.Println(accessToken)
 //
 //	fmt.Fprintf(w, "Token: "+accessToken)
-//}
+// }
 
-//func GenerateToken(username string) (string, error) {
+// func GenerateToken(username string) (string, error) {
 //	token, err := auth.CreateAccessToken(username)
 //	if err != nil {
 //		fmt.Println("errCreate")
@@ -484,7 +459,7 @@ func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 //	}
 //	return resp, err
 //	return token, nil
-//}
+// }
 
 func MakeGoogleCallbackEndpoints(u account.UserService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -493,12 +468,12 @@ func MakeGoogleCallbackEndpoints(u account.UserService) endpoint.Endpoint {
 		fmt.Println("token: ", token)
 		if err != nil {
 			fmt.Println(err.Error())
-			//http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			// http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 		if email == nil || username == nil {
 			fmt.Errorf("email or username is nil")
-			//http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			// http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 		_, err = u.GetProfile(ctx, *email)
@@ -512,9 +487,8 @@ func MakeGoogleCallbackEndpoints(u account.UserService) endpoint.Endpoint {
 				CreatedAt: time.Now().Unix(),
 				UpdatedAt: time.Now().Unix(),
 			}
-			req := RegisterUserRequest{user: newUser}
-			msg, err := u.Register(ctx, req.user)
-			if err != nil {
+			msg, errRegister := u.Register(ctx, newUser)
+			if errRegister != nil {
 				return
 			}
 			fmt.Println("msg:", msg)
@@ -554,7 +528,7 @@ func getUserInfo(state string, code string) (*string, *string, *string, error) {
 		return nil, nil, nil, fmt.Errorf("Invalid token oauth2: %s", err.Error())
 	}
 
-	//get email in contents
+	// get email in contents
 	var result map[string]interface{}
 	err = json.Unmarshal(contents, &result)
 	if err != nil {
