@@ -28,7 +28,7 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
-    <link href="css/service-manage.css" rel="stylesheet">
+    <link href="css/booking-manage.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navbar Start -->
@@ -78,23 +78,34 @@
     </nav>
     <!-- Navbar End -->
 
-    <!-- Button create new service -->
-    <div class="container mt-4">
-        <button id="createService" class="btn btn-primary">Create New Service</button>
-        <button id="createCategoryService" class="btn btn-warning">Create New Category Service</button>
-    </div>
+    <!-- Booking form -->
+    <form id="booking-form">
+        <label for="booked_date">Booked Date:</label>
+        <input type="date" id="booked_date" name="booked_date" required><br><br>
+        
+        <button type="submit">Find Booking</button>
+    </form>
 
-    <!-- Service Data Table -->
     <div class="container mt-4">
-        <h1 class="text-center">Service Data Table</h1>
-        <div id="serviceData">
+        <h1 class="text-center">Booking Data Table</h1>
+        <div id="bookingData">
             <!-- Data will be inserted here -->
         </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item">
+                    <a class="page-link" href="#" id="prevPage">Previous</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#" id="nextPage">Next</a>
+                </li>
+            </ul>
+        </nav>
     </div>
     
-    <!-- Template Javascript -->
+        <!-- Template Javascript -->
     <script src="js/main.js"></script>
     <script src="js/account.js"></script>
-    <script src="js/service-manage.js"></script>
+    <script src="js/booking-manage.js"></script>
 </body>
 </html>

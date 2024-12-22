@@ -61,6 +61,7 @@
                         <a href="service-manage.html" class="dropdown-item">Service</a>
                         <a href="barber-manage.html" class="dropdown-item">Barber</a>
                         <a href="timeslot-manage.html" class="dropdown-item">Timeslot</a>
+                        <a href="booking-manage.html" class="dropdown-item">Booking</a>
                     </div>
                 </div>
                 <a href="contact.html" class="nav-item nav-link">Contact</a>
@@ -81,13 +82,17 @@
     <!-- Timeslot form -->
     <form id="timeslot-form">
         <label for="barber_id">Barber ID:</label>
-        <input type="number" id="barber_id" name="barber_id" required><br><br>
+        <select id="barber_id" name="barber_id" required>
+            <option value="">Select a barber</option>
+        </select><br><br>
         
         <label for="booked_date">Booked Date:</label>
         <input type="date" id="booked_date" name="booked_date" required><br><br>
         
         <label for="start_time">Start Time:</label>
-        <input type="time" id="start_time" name="start_time" required><br><br>
+        <input list="timeOptions" id="timeInput" placeholder="Select a time">
+        <datalist id="timeOptions"></datalist>
+        
         
         <button type="submit">Find Timeslot</button>
     </form>
@@ -145,6 +150,10 @@
         </div>
     </div>
 
+
+    <!-- Template Javascript -->
+    <script src="js/main.js"></script>
+    <script src="js/account.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/timeslot-manage.js"></script>
 </body>

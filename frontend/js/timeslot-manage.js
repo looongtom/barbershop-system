@@ -2,16 +2,41 @@
 
 const accessToken = localStorage.getItem('accessToken');
 
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('http://192.168.1.9:8008/barber/get-list')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200 && data.message === "success") {
+                const barberSelect = document.getElementById('barber_id');
+                data.data.forEach(barber => {
+                    const option = document.createElement('option');
+                    option.value = barber.id;
+                    option.textContent = barber.fullName; // Use 'fullName' property
+                    barberSelect.appendChild(option);
+                });
+            } else {
+                console.error('Error fetching barbers:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching barbers:', error);
+        });
+});
+
 document.getElementById('timeslot-form').addEventListener('submit', function(event) {
     event.preventDefault();
     
     const barberId = parseInt(document.getElementById('barber_id').value, 10);
-    const bookedDate = document.getElementById('booked_date').value;
-    const startTime = document.getElementById('start_time').value;
+    const bookedDateInput = document.getElementById('booked_date').value;
+    const bookedDate = new Date(bookedDateInput);
+    const formattedBookedDate = ('0' + bookedDate.getDate()).slice(-2) + '-' + 
+                                ('0' + (bookedDate.getMonth() + 1)).slice(-2) + '-' + 
+                                bookedDate.getFullYear();    
+    const startTime = document.getElementById('timeInput').value;
     
     const data = {
         barber_id: barberId,
-        booked_date: bookedDate,
+        booked_date: formattedBookedDate,
         start_time: startTime
     };
     
@@ -33,6 +58,15 @@ document.getElementById('timeslot-form').addEventListener('submit', function(eve
         console.error('Error:', error);
     });
 });
+
+var barberName = '';
+document.getElementById('barber_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    barberName = selectedOption.textContent;
+    console.log('Selected Barber Name:', barberName);
+    // You can use barberName as needed
+});
+
 
 // Sample function to simulate fetching data from the API
 // async function fetchData() {
@@ -83,9 +117,10 @@ function displayData(response) {
                     <th>Start Time</th>
                     <th>Date</th>
                     <th>Status</th>
-                    <th>Barber Id</th>
+                    <th>Barber</th>
                     <th>Created at</th>
                     <th>Updated at</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -100,9 +135,9 @@ function displayData(response) {
                 <td>${timeslot.start_time}</td>
                 <td>${timeslot.booked_date}</td>
                 <td>${timeslot.status}</td>
-                <td>${timeslot.barber_id}</td>
-                <td>${new Date(timeslot.created_at).toLocaleString()}</td>
-                <td>${new Date(timeslot.updated_at).toLocaleString()}</td>
+                <td>${barberName}</td>
+                <td>${formatTimestamp(timeslot.created_at)}</td>
+                <td>${formatTimestamp(timeslot.updated_at)}</td>
                 <td>
                     <button class="btn btn-primary btn-sm" onclick="updateBarber(${timeslot.id})">Update</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteBarber(${timeslot.id})">Delete</button>
@@ -116,6 +151,41 @@ function displayData(response) {
         timeslotDataDiv.innerHTML = `<p>No data available.</p>`;
     }
 }
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp * 1000); // Convert from seconds to milliseconds
+    const day = ('0' + date.getDate()).slice(-2);
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const year = date.getFullYear();
+    const hours = ('0' + date.getHours()).slice(-2);
+    const minutes = ('0' + date.getMinutes()).slice(-2);
+    const seconds = ('0' + date.getSeconds()).slice(-2);
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+}
+
+const startHour = 8;
+const endHour = 18;
+const datalist = document.getElementById('timeOptions');
+
+for (let hour = startHour; hour <= endHour; hour++) {
+  for (let minute of [0, 30]) {
+    const timeValue = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    const option = document.createElement('option');
+    option.value = timeValue;
+    datalist.appendChild(option);
+  }
+}
+
+document.getElementById('timeInput').addEventListener('input', function() {
+    const timeInput = document.getElementById('timeInput');
+    const timeOptions = document.getElementById('timeOptions').options;
+    for (let i = 0; i < timeOptions.length; i++) {
+        if (timeOptions[i].value === timeInput.value) {
+            timeInput.value = timeOptions[i].value;
+            break;
+        }
+    }
+});
 
 // Function to simulate updating an item
 function updateItem(id) {

@@ -1,4 +1,16 @@
 /********** Template CSS **********/
+body {
+    font-family: Arial, sans-serif;
+    background-color: #a7a7a7;
+    margin: 0;
+    padding: 20px;
+}
+
+/* set color for text in table*/
+.table {
+    color: black;
+}
+
 :root {
     --primary: #189441;
     --secondary: #191C24;
