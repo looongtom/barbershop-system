@@ -137,6 +137,11 @@ func main() {
 		transport.DecodeEmpty,
 		transport.EncodeResponse)
 
+	GoogleCallbackHandler := httptransport.NewServer(
+		transport.MakeGoogleCallbackEndpoints(svc),
+		transport.DecodeGoogleCallbackRequest,
+		transport.EncodeResponse)
+
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/auth/register", RegisterUserHandler).Methods("POST")
@@ -149,9 +154,10 @@ func main() {
 	r.Handle("/auth/logout", middleware.JWTMiddleware(LogoutHandler, authenSvc)).Methods("POST")
 	//r.Handle("/auth/change-pass-first-time", ChangePassFirstTimeHandler).Methods("POST")
 	//
-	//r.Handle("/login-oauth", http.HandlerFunc(transport.HandleMain)).Methods("GET")
-	//r.Handle("/login", http.HandlerFunc(transport.HandleGoogleLogin)).Methods("GET")
+	r.Handle("/login-oauth", http.HandlerFunc(transport.HandleMain)).Methods("GET")
+	r.Handle("/login", http.HandlerFunc(transport.HandleGoogleLogin)).Methods("GET")
 	//r.Handle("/callback", http.HandlerFunc(transport.HandleGoogleCallback)).Methods("GET")
+	r.Handle("/callback-google", GoogleCallbackHandler).Methods("GET")
 
 	logger.Log("msg", "HTTP", "addr", ":8008")
 	logger.Log("err", http.ListenAndServe(":8008", nil))

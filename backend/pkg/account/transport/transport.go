@@ -5,7 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/joho/godotenv"
+	"golang.org/x/oauth2/google"
+	"log"
 	"net/http"
+	"os"
+	"strings"
+	"time"
 
 	"DoAn"
 	"DoAn/auth"
@@ -24,22 +30,22 @@ var (
 	oauthStateString = "pseudo-random"
 )
 
-// func init() {
-//	err := godotenv.Load("./backend/pkg/account/cmd/account.env")
-//	if err != nil {
-//		log.Fatalln("Error loading account.env file")
-//	}
-//	fmt.Println("GOOGLE_CLIENT_ID: ", os.Getenv("GOOGLE_CLIENT_ID"))
-//	fmt.Println("GOOGLE_CLIENT_SECRET: ", os.Getenv("GOOGLE_CLIENT_SECRET"))
-//
-//	googleOauthConfig = &oauth2.Config{
-//		RedirectURL:  "http://localhost:8000/callback",
-//		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-//		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-//		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-//		Endpoint:     google.Endpoint,
-//	}
-// }
+func init() {
+	err := godotenv.Load("./backend/pkg/account/cmd/account.env")
+	if err != nil {
+		log.Fatalln("Error loading account.env file")
+	}
+	fmt.Println("GOOGLE_CLIENT_ID: ", os.Getenv("GOOGLE_CLIENT_ID"))
+	fmt.Println("GOOGLE_CLIENT_SECRET: ", os.Getenv("GOOGLE_CLIENT_SECRET"))
+
+	googleOauthConfig = &oauth2.Config{
+		RedirectURL:  "http://localhost:8000/callback-google",
+		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+		Endpoint:     google.Endpoint,
+	}
+}
 
 type (
 	RegisterUserRequest struct {
@@ -70,6 +76,11 @@ type (
 	LogoutRequest struct {
 		Token    string `json:"token"`
 		Username string `json:"username"`
+	}
+
+	GoogleCallbackRequest struct {
+		State string `json:"state"`
+		Code  string `json:"code"`
 	}
 
 	UserProfileResponse struct {
@@ -250,6 +261,15 @@ func DecodeGetProfileRequest(_ context.Context, r *http.Request) (interface{}, e
 	return emailRP, nil
 }
 
+func DecodeGoogleCallbackRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	state := r.FormValue("state")
+	code := r.FormValue("code")
+	return GoogleCallbackRequest{
+		State: state,
+		Code:  code,
+	}, nil
+}
+
 func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, err error) {
 	tokenString := r.Header.Get("Authorization")
 	if tokenString == "" {
@@ -343,22 +363,22 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //	return tokenString, nil
 // }
 
-// func HandleMain(w http.ResponseWriter, request *http.Request) {
-//	var htmlIndex = `<html>
-// <body>
-//	<a href="/login">Google Log In</a>
-// </body>
-// </html>`
-//
-//	fmt.Fprintf(w, htmlIndex)
-// }
-//
-// func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
-//	url := googleOauthConfig.AuthCodeURL(oauthStateString)
-//	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-// }
-//
-// func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
+func HandleMain(w http.ResponseWriter, request *http.Request) {
+	var htmlIndex = `<html>
+<body>
+	<a href="/login">Google Log In</a>
+</body>
+</html>`
+
+	fmt.Fprintf(w, htmlIndex)
+}
+
+func HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
+	url := googleOauthConfig.AuthCodeURL(oauthStateString)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+//func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 //	w.Header().Set("Content-Type", "application/json")
 //
 //	token, email, username, err := getUserInfo(r.FormValue("state"), r.FormValue("code"))
@@ -372,92 +392,184 @@ func DecodeEmptyRequest(ctx context.Context, r *http.Request) (_ interface{}, er
 //		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 //		return
 //	}
-//	//result := map[string]interface{}{"token": token, "email": email, "username": username}
+//	result := map[string]interface{}{"token": token, "email": email, "username": username}
 //	fmt.Println("email: ", *email)
 //
-//	collectionPostgres, err := database.ConnectPostgres()
-//	if err != nil {
-//		return
-//	}
-//	var user entity.Account
-//	errFindEmail := collectionPostgres.QueryRow("SELECT id,username,email,password,role FROM account WHERE email=$1", email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Role)
+//	//collectionPostgres, err := database.ConnectPostgres()
+//	//if err != nil {
+//	//	return
+//	//}
+//	//var user entity.Account
+//	//errFindEmail := collectionPostgres.QueryRow("SELECT id,username,email,password,role FROM account WHERE email=$1", email).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Role)
 //
-//	if errFindEmail != nil {
+//	data, err := u.GetProfile(ctx, email)
+//	if err != nil {
 //		fmt.Println("Account does not exist, create new account")
-//		password := ""
 //		newUser := entity.Account{
 //			Username:  *username,
 //			Email:     *email,
-//			Password:  password,
+//			Password:  "",
 //			Role:      entity.RoleUser,
 //			CreatedAt: time.Now().Unix(),
 //			UpdatedAt: time.Now().Unix(),
 //		}
-//		_, errs := collectionPostgres.Exec("INSERT INTO account (username, email, password,role,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
-//			newUser.Username, newUser.Email, newUser.Password, newUser.Role, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
-//		if errs != nil {
+//		req := RegisterUserRequest{user: newUser}
+//		msg, err := u.Register(ctx, req.user)
+//		if err != nil {
 //			return
 //		}
+//		fmt.Println("msg:", msg)
 //	}
 //
-//	fmt.Println("Account already exists, create jwt token")
-//	accessToken, err := GenerateToken(*username)
+//	//if errFindEmail != nil {
+//	//	fmt.Println("Account does not exist, create new account")
+//	//	password := ""
+//	//	newUser := entity.Account{
+//	//		Username:  *username,
+//	//		Email:     *email,
+//	//		Password:  password,
+//	//		Role:      entity.RoleUser,
+//	//		CreatedAt: time.Now().Unix(),
+//	//		UpdatedAt: time.Now().Unix(),
+//	//	}
+//	//	_, errs := collectionPostgres.Exec("INSERT INTO account (username, email, password,role,phone_number,full_name,created_at,updated_at) VALUES ($1, $2, $3,$4,$5,$6,$7,$8)",
+//	//		newUser.Username, newUser.Email, newUser.Password, newUser.Role, newUser.PhoneNumber, newUser.FullName, newUser.CreatedAt, newUser.UpdatedAt)
+//	//	if errs != nil {
+//	//		return
+//	//	}
+//	//}
+//
+//	accessToken, refreshToken, err := u.Login(ctx, entity.Account{
+//		Username: *username,
+//		Password: "",
+//	})
 //	if err != nil {
-//		return
+//		return nil, err
 //	}
-//	// Connect to MongoDB
-//	collectionMongo := database.ConnectMongo(os.Getenv("TokenCollectionMongo"))
-//	newToken := bson.M{"token": token, "account": username, "created_at": time.Now()}
-//	_, errs := collectionMongo.InsertOne(context.TODO(), newToken)
-//	if errs != nil {
-//		return
+//	resp := LoginResponse{
+//		Username:     *username,
+//		RefreshToken: *refreshToken,
+//		AccessToken:  accessToken,
 //	}
 //
 //	fmt.Print("\nToken:")
 //	fmt.Println(accessToken)
 //
 //	fmt.Fprintf(w, "Token: "+accessToken)
-// }
-// func GenerateToken(username string) (string, error) {
+//}
+
+//func GenerateToken(username string) (string, error) {
 //	token, err := auth.CreateAccessToken(username)
 //	if err != nil {
 //		fmt.Println("errCreate")
 //		fmt.Println(err)
 //		return "", err
 //	}
+//
+//	req := LoginRequest{
+//		Username: username,
+//		Password: username,
+//	}
+//	accessToken, refreshToken, err := u.Login(ctx, entity.Account{
+//		Username: req.Username,
+//		Password: req.Password,
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//	resp := LoginResponse{
+//		Username:     req.Username,
+//		RefreshToken: *refreshToken,
+//		AccessToken:  *accessToken,
+//	}
+//	return resp, err
 //	return token, nil
-// }
-// func getUserInfo(state string, code string) (*string, *string, *string, error) {
-//	if state != oauthStateString {
-//		return nil, nil, nil, fmt.Errorf("invalid oauth state")
-//	}
-//
-//	token, err := googleOauthConfig.Exchange(oauth2.NoContext, code)
-//	if err != nil {
-//		return nil, nil, nil, fmt.Errorf("code exchange failed: %s", err.Error())
-//	}
-//
-//	contents, err := auth.CheckTokenOauth(token.AccessToken)
-//	if err != nil {
-//		return nil, nil, nil, fmt.Errorf("Invalid token oauth2: %s", err.Error())
-//	}
-//
-//	//get email in contents
-//	var result map[string]interface{}
-//	err = json.Unmarshal(contents, &result)
-//	if err != nil {
-//		return nil, nil, nil, fmt.Errorf("failed to parse account info: %s", err.Error())
-//	}
-//	email, ok := result["email"].(string)
-//	if !ok {
-//		return nil, nil, nil, fmt.Errorf("email is not a string")
-//	}
-//	parts := strings.Split(email, "@")
-//	if len(parts) < 2 {
-//		return nil, nil, nil, fmt.Errorf("invalid email format")
-//	}
-//	username := parts[0]
-//	fmt.Println("username: ", username)
-//
-//	return &token.AccessToken, &email, &username, nil
-// }
+//}
+
+func MakeGoogleCallbackEndpoints(u account.UserService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		googleCallBack := request.(GoogleCallbackRequest)
+		token, email, username, err := getUserInfo(googleCallBack.State, googleCallBack.Code)
+		fmt.Println("token: ", token)
+		if err != nil {
+			fmt.Println(err.Error())
+			//http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			return
+		}
+		if email == nil || username == nil {
+			fmt.Errorf("email or username is nil")
+			//http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			return
+		}
+		_, err = u.GetProfile(ctx, *email)
+		if err != nil {
+			fmt.Println("Account does not exist, create new account")
+			newUser := entity.Account{
+				Username:  *username,
+				Email:     *email,
+				Password:  "",
+				Role:      entity.RoleUser,
+				CreatedAt: time.Now().Unix(),
+				UpdatedAt: time.Now().Unix(),
+			}
+			req := RegisterUserRequest{user: newUser}
+			msg, err := u.Register(ctx, req.user)
+			if err != nil {
+				return
+			}
+			fmt.Println("msg:", msg)
+		}
+
+		accessToken, refreshToken, err := u.Login(ctx, entity.Account{
+			Username: *username,
+			Password: "",
+		})
+		if err != nil {
+			return nil, err
+		}
+		resp := LoginResponse{
+			Username:     *username,
+			RefreshToken: *refreshToken,
+			AccessToken:  *accessToken,
+		}
+
+		fmt.Print("\nToken resp:")
+		fmt.Println(resp)
+		return resp, err
+	}
+}
+
+func getUserInfo(state string, code string) (*string, *string, *string, error) {
+	if state != oauthStateString {
+		return nil, nil, nil, fmt.Errorf("invalid oauth state")
+	}
+
+	token, err := googleOauthConfig.Exchange(oauth2.NoContext, code)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("code exchange failed: %s", err.Error())
+	}
+
+	contents, err := auth.CheckTokenOauth(token.AccessToken)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("Invalid token oauth2: %s", err.Error())
+	}
+
+	//get email in contents
+	var result map[string]interface{}
+	err = json.Unmarshal(contents, &result)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to parse account info: %s", err.Error())
+	}
+	email, ok := result["email"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("email is not a string")
+	}
+	parts := strings.Split(email, "@")
+	if len(parts) < 2 {
+		return nil, nil, nil, fmt.Errorf("invalid email format")
+	}
+	username := parts[0]
+	fmt.Println("username: ", username)
+
+	return &token.AccessToken, &email, &username, nil
+}
