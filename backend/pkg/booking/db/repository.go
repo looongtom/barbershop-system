@@ -1,14 +1,16 @@
 package db
 
 import (
-	"DoAn"
+	"context"
+	"database/sql"
+	"time"
+
+	"github.com/lib/pq"
+
+	booking "DoAn"
 	"DoAn/api"
 	"DoAn/entity"
 	"DoAn/mapper"
-	"context"
-	"database/sql"
-	"github.com/lib/pq"
-	"time"
 
 	"github.com/go-kit/kit/log"
 	_ "github.com/lib/pq"
@@ -58,6 +60,7 @@ func (r repo) CreateBookingDetail(ctx context.Context, listService []int, bookin
 	}
 	return nil
 }
+
 func (r *repo) CreateBooking(ctx context.Context, booking api.BookingRequest) (entity.Booking, error) {
 	newBooking := entity.Booking{
 		CustomerID: booking.CustomerID,
@@ -69,13 +72,15 @@ func (r *repo) CreateBooking(ctx context.Context, booking api.BookingRequest) (e
 		FeedBackId: booking.FeedBackId,
 		CreatedAt:  time.Now().Unix(),
 		UpdatedAt:  time.Now().Unix(),
+		BookedDate: booking.BookedDate,
 	}
-	_, err := r.db.Exec("INSERT INTO booking(customer_id, barber_id, result_id, status, price, slot_id, feedback_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", newBooking.CustomerID, newBooking.BarberId, newBooking.ResultId, newBooking.Status, newBooking.Price, newBooking.SlotId, newBooking.FeedBackId, newBooking.CreatedAt, newBooking.UpdatedAt)
+	_, err := r.db.Exec("INSERT INTO booking(customer_id, barber_id, result_id, status, price, slot_id, feedback_id, created_at, updated_at, booked_date) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9,$10)",
+		newBooking.CustomerID, newBooking.BarberId, newBooking.ResultId, newBooking.Status, newBooking.Price, newBooking.SlotId, newBooking.FeedBackId, newBooking.CreatedAt, newBooking.UpdatedAt, newBooking.BookedDate)
 	if err != nil {
 		r.logger.Log("error while inserting data")
 		return entity.Booking{}, err
 	}
-	//get booking id after insert
+	// get booking id after insert
 	var bookingId int
 	err = r.db.QueryRow("SELECT id FROM booking WHERE created_at = $1", newBooking.CreatedAt).Scan(&bookingId)
 	if err != nil {
@@ -127,6 +132,17 @@ func (r repo) GetTotalCountBookingByUserId(ctx context.Context, id int) (int, er
 	return total, nil
 }
 
+func (r repo) GetTotalCountBookingByUserIdAndBookedDate(ctx context.Context, id int, bookedDate string) (int, error) {
+	query := `SELECT COUNT(*) FROM booking where customer_id = $1 and booked_date=$2 ;`
+	var total int
+	err := r.db.QueryRow(query, id, bookedDate).Scan(&total)
+	if err != nil {
+		r.logger.Log("error while scanning")
+		return 0, err
+	}
+	return total, nil
+}
+
 func (r repo) GetTotalCountBookingByBarberId(ctx context.Context, id int) (int, error) {
 	query := `SELECT COUNT(*) FROM booking where barber_id = $1;`
 	var total int
@@ -138,11 +154,22 @@ func (r repo) GetTotalCountBookingByBarberId(ctx context.Context, id int) (int, 
 	return total, nil
 }
 
+func (r repo) GetTotalCountBookingByBarberIdAndBookedDate(ctx context.Context, id int, bookedDate string) (int, error) {
+	query := `SELECT COUNT(*) FROM booking where barber_id = $1 and booked_date=$2;`
+	var total int
+	err := r.db.QueryRow(query, id, bookedDate).Scan(&total)
+	if err != nil {
+		r.logger.Log("error while scanning")
+		return 0, err
+	}
+	return total, nil
+}
+
 func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.BookingMapper, error) {
 	offset := (page - 1) * pageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.*, 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, 
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
@@ -171,7 +198,7 @@ func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.
 
 func (r repo) GetBookingById(ctx context.Context, id int) (entity.Booking, error) {
 	var booking entity.Booking
-	err := r.db.QueryRow("SELECT * FROM booking WHERE id = $1", id).Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt)
+	err := r.db.QueryRow("SELECT * FROM booking WHERE id = $1", id).Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate)
 	if err != nil {
 		r.logger.Log("error while scanning")
 		return entity.Booking{}, err
@@ -238,13 +265,77 @@ func (r repo) FindBookingByBarber(ctx context.Context, findReq api.FindListBooki
 	offset := (findReq.Page - 1) * findReq.PageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.*, 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, b.booked_date,
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
 		LEFT JOIN 
 			booking_detail bd ON b.id = bd.booking_id
 		WHERE b.barber_id  = $1
+		GROUP BY 
+			b.id
+		ORDER BY b.updated_at DESC
+		LIMIT $2 OFFSET $3 ;
+		`, findReq.Account, findReq.PageSize, offset)
+	if err != nil {
+		r.logger.Log("error while querying")
+		return nil, err
+	}
+	for rows.Next() {
+		var booking mapper.BookingMapper
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate, pq.Array(&booking.ListServices))
+		if err != nil {
+			r.logger.Log("error while scanning")
+			return nil, err
+		}
+		listBooking = append(listBooking, booking)
+	}
+	return listBooking, nil
+}
+
+func (r repo) FindBookingByBarberAndBookedDate(ctx context.Context, findReq api.FindListBookingRequest) ([]mapper.BookingMapper, error) {
+	offset := (findReq.Page - 1) * findReq.PageSize
+	var listBooking []mapper.BookingMapper
+	rows, err := r.db.Query(`SELECT 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, b.booked_date,
+			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
+		FROM 
+			booking b
+		LEFT JOIN 
+			booking_detail bd ON b.id = bd.booking_id
+		WHERE b.barber_id  = $1 and b.booked_date = $2
+		GROUP BY 
+			b.id
+		ORDER BY b.updated_at DESC
+		LIMIT $3 OFFSET $4 ;
+		`, findReq.Account, findReq.BookedDate, findReq.PageSize, offset)
+	if err != nil {
+		r.logger.Log("error while querying")
+		return nil, err
+	}
+	for rows.Next() {
+		var booking mapper.BookingMapper
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate, pq.Array(&booking.ListServices))
+		if err != nil {
+			r.logger.Log("error while scanning")
+			return nil, err
+		}
+		listBooking = append(listBooking, booking)
+	}
+	return listBooking, nil
+}
+
+func (r repo) FindBookingByUser(ctx context.Context, findReq api.FindListBookingRequest) ([]mapper.BookingMapper, error) {
+	offset := (findReq.Page - 1) * findReq.PageSize
+	var listBooking []mapper.BookingMapper
+	rows, err := r.db.Query(`SELECT 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, 
+			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
+		FROM 
+			booking b
+		LEFT JOIN 
+			booking_detail bd ON b.id = bd.booking_id
+		WHERE b.customer_id = $1
 		GROUP BY 
 			b.id
 		ORDER BY b.updated_at DESC
@@ -266,22 +357,22 @@ func (r repo) FindBookingByBarber(ctx context.Context, findReq api.FindListBooki
 	return listBooking, nil
 }
 
-func (r repo) FindBookingByUser(ctx context.Context, findReq api.FindListBookingRequest) ([]mapper.BookingMapper, error) {
+func (r repo) FindBookingByUserAndBookedDate(ctx context.Context, findReq api.FindListBookingRequest) ([]mapper.BookingMapper, error) {
 	offset := (findReq.Page - 1) * findReq.PageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.*, 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, 
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
 		LEFT JOIN 
 			booking_detail bd ON b.id = bd.booking_id
-		WHERE b.customer_id = $1
+		WHERE b.customer_id = $1 and b.booked_date = $2
 		GROUP BY 
 			b.id
 		ORDER BY b.updated_at DESC
-		LIMIT $2 OFFSET $3 ;
-		`, findReq.Account, findReq.PageSize, offset)
+		LIMIT $3 OFFSET $4 ;
+		`, findReq.Account, findReq.BookedDate, findReq.PageSize, offset)
 	if err != nil {
 		r.logger.Log("error while querying")
 		return nil, err

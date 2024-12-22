@@ -11,6 +11,7 @@ type Booking struct {
 	FeedBackId int     `json:"feedback_id"`
 	CreatedAt  int64   `json:"created_at"`
 	UpdatedAt  int64   `json:"updated_at"`
+	BookedDate string  `json:"booked_date"`
 }
 
 type BookingDetail struct {

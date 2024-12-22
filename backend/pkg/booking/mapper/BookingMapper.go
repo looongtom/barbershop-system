@@ -16,6 +16,7 @@ type BookingMapper struct {
 	UpdatedAt         int64            `json:"updated_at"`
 	ListServices      []int64          `json:"list_services"`
 	ListServiceStruct []BookingService `json:"list_service_struct"`
+	BookedDate        string           `json:"booked_date"`
 }
 
 type BookingService struct {
