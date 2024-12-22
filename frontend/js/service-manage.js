@@ -5,7 +5,7 @@ const accessToken = localStorage.getItem('accessToken');
 // Sample function to simulate fetching data from the API
 async function fetchData() {
     // Replace with your actual API URL
-    const apiUrl = 'http://localhost:8009/servicing/service/get-list-v2'; 
+    const apiUrl = 'http://192.168.1.9:8009/servicing/service/get-list-v2'; 
 
     try {
         const response = await fetch(apiUrl, {

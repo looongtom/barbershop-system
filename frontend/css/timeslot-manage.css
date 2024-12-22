@@ -1,0 +1,9 @@
+.modal-content {
+    background-color: #777f87; /* Set a solid white background */
+    opacity: 1; /* Ensure the modal content is fully opaque */
+}
+
+.form-label {
+    font-weight: bold;
+    color: black;
+}

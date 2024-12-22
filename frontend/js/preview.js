@@ -32,7 +32,7 @@ async function getHaircut() {
     formData.append('account_id', accountId);
 
     try {
-        const response = await fetch('http://192.168.1.7:8005/previewimage/upload', {
+        const response = await fetch('http://192.168.1.9:8005/previewimage/upload', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' // Add the actual token if needed

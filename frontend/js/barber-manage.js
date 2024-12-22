@@ -5,7 +5,7 @@ const accessToken = localStorage.getItem('accessToken');
 // Sample function to simulate fetching data from the API
 async function fetchData() {
     // Replace with your actual API URL
-    const apiUrl = 'http://localhost:8008/barber/get-list'; 
+    const apiUrl = 'http://192.168.1.9:8008/barber/get-list'; 
 
     try {
         const response = await fetch(apiUrl, {
@@ -120,7 +120,7 @@ async function createBarber(event) {
     dataObject.role = parseInt(dataObject.role, 10);
     const requestBody = JSON.stringify(dataObject);
 
-    const apiUrl = 'http://localhost:8008/auth/register'; // Replace with your actual API URL
+    const apiUrl = 'http://192.168.1.9:8008/auth/register'; // Replace with your actual API URL
 
     try {
         const response = await fetch(apiUrl, {
