@@ -1,10 +1,11 @@
 package main
 
 import (
-	"DoAn/api"
 	"encoding/json"
 	"fmt"
 	"log"
+
+	"DoAn/api"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -55,7 +56,7 @@ func main() {
 	fmt.Println("Message produced successfully!")
 }
 
-//func serializeMessage(message Message) ([]byte, error) {
+// func serializeMessage(message Message) ([]byte, error) {
 //
 //	// Serialize the message struct to JSON
 //
@@ -69,7 +70,7 @@ func main() {
 //
 //	return serialized, nil
 //
-//}
+// }
 
 func produceMessage(p *kafka.Producer, topic string, message []byte) error {
 	// Create a new Kafka message to be produced

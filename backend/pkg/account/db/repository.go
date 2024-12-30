@@ -1,13 +1,14 @@
 package db
 
 import (
-	"DoAn"
-	"DoAn/entity"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
+
+	account "DoAn"
+	"DoAn/entity"
 
 	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +24,7 @@ type repo struct {
 
 func (r repo) ChangePassFirstTime(ctx context.Context, username, password string) (interface{}, error) {
 	var result entity.Account
-	err := r.db.QueryRow("SELECT id,username,email,password,Role FROM account WHERE username=$1 and password ='' ", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
+	err := r.db.QueryRow("SELECT id,username,email,password,Role FROM account WHERE username=$1 ", username).Scan(&result.ID, &result.Username, &result.Email, &result.Password, &result.Role)
 	if err != nil {
 		r.logger.Log(fmt.Sprintf("error while selecting account info: %v", err))
 		return nil, err
