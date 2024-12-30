@@ -40,7 +40,7 @@ func init() {
 	fmt.Println("GOOGLE_CLIENT_SECRET: ", os.Getenv("GOOGLE_CLIENT_SECRET"))
 
 	googleOauthConfig = &oauth2.Config{
-		RedirectURL:  "http://localhost:8008/callback",
+		RedirectURL:  os.Getenv("URL_GOOGLE_OAUTH"),
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
@@ -67,6 +67,12 @@ type (
 		Password string `json:"password"`
 	}
 	LoginResponse struct {
+		Username     string `json:"username"`
+		RefreshToken string `json:"refreshToken"`
+		AccessToken  string `json:"accessToken"`
+	}
+	LoginByGoogleResponse struct {
+		Email        string `json:"email"`
 		Username     string `json:"username"`
 		RefreshToken string `json:"refreshToken"`
 		AccessToken  string `json:"accessToken"`
@@ -127,6 +133,34 @@ func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 	return json.NewEncoder(w).Encode(response)
 }
+
+func EncodeResponseWeb(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
+	if err, ok := response.(error); ok {
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "<html><body><h1>Error: %s</h1></body></html>", err.Error())
+			return err
+		}
+	}
+
+	if resp, ok := response.(LoginByGoogleResponse); ok {
+		htmlResponse := fmt.Sprintf(`
+            <html>
+            <body>
+                <h1>Login Successful</h1>
+                <h1>Check your email %s</h1>
+            </body>
+            </html>`, resp.Email)
+		_, err := w.Write([]byte(htmlResponse))
+		return err
+	}
+
+	return nil
+}
+
 func DecodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var request LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -501,7 +535,8 @@ func MakeGoogleCallbackEndpoints(u account.UserService) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		resp := LoginResponse{
+		resp := LoginByGoogleResponse{
+			Email:        *email,
 			Username:     *username,
 			RefreshToken: *refreshToken,
 			AccessToken:  *accessToken,

@@ -140,7 +140,7 @@ func main() {
 	GoogleCallbackHandler := httptransport.NewServer(
 		transport.MakeGoogleCallbackEndpoints(svc),
 		transport.DecodeGoogleCallbackRequest,
-		transport.EncodeResponse)
+		transport.EncodeResponseWeb)
 
 	http.Handle("/", addCorsHeaders(r))
 

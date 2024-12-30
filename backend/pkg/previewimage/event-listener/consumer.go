@@ -1,12 +1,13 @@
 package main
 
 import (
-	"DoAn/api"
 	"encoding/json"
 	"fmt"
 	logV "log"
 	"os"
 	"os/signal"
+
+	"DoAn/api"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/joho/godotenv"
