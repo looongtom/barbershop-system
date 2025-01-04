@@ -72,12 +72,6 @@ func main() {
 		svc = service.NewService(repo, logger, connGrpcAccount, kafkaBroker)
 	}
 
-	CreatePreviewImageHandler := httptransport.NewServer(
-		transport.MakeCreatePreviewImageEndpoints(svc),
-		transport.DecodeCreatePreviewImageRequest,
-		transport.EncodeResponse,
-	)
-
 	UploadImagesHandler := httptransport.NewServer(
 		transport.MakeUploadImagesEndpoints(svc),
 		transport.DecodeUploadImagesRequest,
@@ -86,7 +80,6 @@ func main() {
 
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/previewimage/create", middleware.JWTMiddleware(CreatePreviewImageHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/previewimage/upload", middleware.JWTMiddleware(UploadImagesHandler, connGrpcAccount)).Methods("POST")
 
 	logger.Log("msg", "HTTP", "addr", ":8005")

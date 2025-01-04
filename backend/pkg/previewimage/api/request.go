@@ -16,6 +16,14 @@ type UpdateImageRequest struct {
 	AccountId int            `json:"account_id"`
 }
 
+type SaveGenerateRequest struct {
+	SelfImg      string `json:"self_img"`
+	ShapeImg     string `json:"shape_img"`
+	ColorImg     string `json:"color_img"`
+	GeneratedImg string `json:"generated_img"`
+	AccountId    int    `json:"account_id"`
+}
+
 type KafkaPreviewImageRequest struct {
 	ID        int    `json:"id,omitempty"`
 	Url       string `json:"url"`
