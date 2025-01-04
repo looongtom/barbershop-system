@@ -2,8 +2,6 @@ syntax = "proto3";
 
 option go_package = "/pb";
 
-import "google/protobuf/wrappers.proto";
-
 message PreviewImage {
     int32 id = 1;
     string generated_img = 2;
@@ -22,6 +20,15 @@ message PreviewImageList {
     repeated PreviewImage preview_images = 1;
 }
 
+message SavePreviewImageRequest {
+    int32 account_id = 1;
+    string generated_img = 2;
+    string self_img = 3;
+    string shape_img = 4;
+    string color_img = 5;
+}
+
 service PreviewImageService {
     rpc GetPreviewImageByUser(GetPreviewImageRequest) returns (PreviewImageList) {};
+    rpc SavePreviewImage(SavePreviewImageRequest) returns (PreviewImage) {};
 }

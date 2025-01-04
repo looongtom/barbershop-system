@@ -1,10 +1,11 @@
 package db
 
 import (
-	"DoAn"
-	"DoAn/entity"
 	"context"
 	"database/sql"
+
+	previewimage "DoAn"
+	"DoAn/entity"
 
 	"github.com/go-kit/kit/log"
 )
@@ -42,7 +43,7 @@ func (r repo) GetPreviewImage(ctx context.Context, id int) (*entity.PreviewImage
 }
 
 func (r repo) GetListPreviewImageByAccountId(ctx context.Context, accountId int) ([]entity.PreviewImage, error) {
-	query := `SELECT id, account_id, self_img,shape_img,color_img, created_at FROM preview_image WHERE account_id=$1`
+	query := `SELECT id, account_id,generated_img, self_img,shape_img,color_img, created_at FROM preview_image WHERE account_id=$1`
 	var list []entity.PreviewImage
 	rows, err := r.db.QueryContext(ctx, query, accountId)
 	if err != nil {
@@ -50,7 +51,7 @@ func (r repo) GetListPreviewImageByAccountId(ctx context.Context, accountId int)
 	}
 	for rows.Next() {
 		var resp entity.PreviewImage
-		err = rows.Scan(&resp.ID, &resp.AccountId, &resp.CreatedAt)
+		err = rows.Scan(&resp.ID, &resp.AccountId, &resp.GeneratedImg, &resp.SelfImg, &resp.ShapeImg, &resp.ColorImg, &resp.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
