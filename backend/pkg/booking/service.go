@@ -1,8 +1,9 @@
 package booking
 
 import (
-	"DoAn/api"
 	"context"
+
+	"DoAn/api"
 )
 
 type BookingService interface {
@@ -13,6 +14,7 @@ type BookingService interface {
 	UpdateBooking(ctx context.Context, booking api.UpdateBookingRequest) (interface{}, error)
 	UpdateBookingService(ctx context.Context, updateBooking api.UpdateBookingServiceRequest) error
 	UpdateBookingTimeslot(ctx context.Context, updateBooking api.UpdateBookingTimeslotRequest) error
+	UpdateBookingStatus(ctx context.Context, updateBooking api.UpdateBookingStatusRequest) error
 
 	FindBookingByUser(ctx context.Context, findReq api.FindListBookingRequest) (int, interface{}, error)
 	FindBookingByBarber(ctx context.Context, findReq api.FindListBookingRequest) (int, interface{}, error)

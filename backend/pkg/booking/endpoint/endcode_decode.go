@@ -22,6 +22,7 @@ func DecodeCreateBooking(ctx context.Context, i interface{}) (request interface{
 		SlotId:        int(req.SlotId),
 		ListServiceId: listServiceId,
 		BookedDate:    req.BookedDate,
+		PreviewId:     int(req.PreviewId),
 	}, nil
 }
 
@@ -37,5 +38,6 @@ func EncodeCreateBooking(ctx context.Context, i interface{}) (response interface
 		CreatedAt:  int32(resp.CreatedAt),
 		UpdatedAt:  int32(resp.UpdatedAt),
 		BookedDate: resp.BookedDate,
+		PreviewId:  int32(*resp.PreviewId),
 	}, nil
 }

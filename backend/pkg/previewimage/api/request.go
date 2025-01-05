@@ -9,11 +9,23 @@ type CreatePreviewImageRequest struct {
 	AccountId int            `json:"account_id"`
 }
 
+type GetListPreviewImageRequest struct {
+	AccountId int `json:"account_id"`
+}
+
 type UpdateImageRequest struct {
 	SelfImg   multipart.File `json:"selfImg"`
 	ShapeImg  multipart.File `json:"shapeImg"`
 	ColorImg  multipart.File `json:"colorImg"`
 	AccountId int            `json:"account_id"`
+}
+
+type SaveGenerateRequest struct {
+	SelfImg      string `json:"self_img"`
+	ShapeImg     string `json:"shape_img"`
+	ColorImg     string `json:"color_img"`
+	GeneratedImg string `json:"generated_img"`
+	AccountId    int    `json:"account_id"`
 }
 
 type KafkaPreviewImageRequest struct {

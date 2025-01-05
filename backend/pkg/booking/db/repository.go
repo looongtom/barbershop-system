@@ -73,9 +73,10 @@ func (r *repo) CreateBooking(ctx context.Context, booking api.BookingRequest) (e
 		CreatedAt:  time.Now().Unix(),
 		UpdatedAt:  time.Now().Unix(),
 		BookedDate: booking.BookedDate,
+		PreviewId:  &booking.PreviewId,
 	}
-	_, err := r.db.Exec("INSERT INTO booking(customer_id, barber_id, result_id, status, price, slot_id, feedback_id, created_at, updated_at, booked_date) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9,$10)",
-		newBooking.CustomerID, newBooking.BarberId, newBooking.ResultId, newBooking.Status, newBooking.Price, newBooking.SlotId, newBooking.FeedBackId, newBooking.CreatedAt, newBooking.UpdatedAt, newBooking.BookedDate)
+	_, err := r.db.Exec("INSERT INTO booking(customer_id, barber_id, result_id, status, price, slot_id, feedback_id, created_at, updated_at, booked_date,preview_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9,$10,$11)",
+		newBooking.CustomerID, newBooking.BarberId, newBooking.ResultId, newBooking.Status, newBooking.Price, newBooking.SlotId, newBooking.FeedBackId, newBooking.CreatedAt, newBooking.UpdatedAt, newBooking.BookedDate, newBooking.PreviewId)
 	if err != nil {
 		r.logger.Log("error while inserting data")
 		return entity.Booking{}, err
@@ -169,7 +170,7 @@ func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.
 	offset := (page - 1) * pageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.preview_id, b.created_at, b.updated_at, 
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
@@ -186,7 +187,7 @@ func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.
 	defer rows.Close()
 	for rows.Next() {
 		var booking mapper.BookingMapper
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.PreviewId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err
@@ -198,7 +199,8 @@ func (r repo) GetListBooking(ctx context.Context, page, pageSize int) ([]mapper.
 
 func (r repo) GetBookingById(ctx context.Context, id int) (entity.Booking, error) {
 	var booking entity.Booking
-	err := r.db.QueryRow("SELECT * FROM booking WHERE id = $1", id).Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate)
+	err := r.db.QueryRow("SELECT id,customer_id,barber_id,result_id,status,price,slot_id,feedback_id,preview_id,created_at,updated_at,booked_date FROM booking WHERE id = $1", id).
+		Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.PreviewId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate)
 	if err != nil {
 		r.logger.Log("error while scanning")
 		return entity.Booking{}, err
@@ -265,7 +267,7 @@ func (r repo) FindBookingByBarber(ctx context.Context, findReq api.FindListBooki
 	offset := (findReq.Page - 1) * findReq.PageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, b.booked_date,
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.preview_id, b.created_at, b.updated_at, b.booked_date,
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
@@ -283,7 +285,7 @@ func (r repo) FindBookingByBarber(ctx context.Context, findReq api.FindListBooki
 	}
 	for rows.Next() {
 		var booking mapper.BookingMapper
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate, pq.Array(&booking.ListServices))
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.PreviewId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err
@@ -297,7 +299,7 @@ func (r repo) FindBookingByBarberAndBookedDate(ctx context.Context, findReq api.
 	offset := (findReq.Page - 1) * findReq.PageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, b.booked_date,
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.preview_id, b.created_at, b.updated_at, b.booked_date,
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
@@ -315,7 +317,7 @@ func (r repo) FindBookingByBarberAndBookedDate(ctx context.Context, findReq api.
 	}
 	for rows.Next() {
 		var booking mapper.BookingMapper
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate, pq.Array(&booking.ListServices))
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.PreviewId, &booking.CreatedAt, &booking.UpdatedAt, &booking.BookedDate, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err
@@ -329,7 +331,7 @@ func (r repo) FindBookingByUser(ctx context.Context, findReq api.FindListBooking
 	offset := (findReq.Page - 1) * findReq.PageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.preview_id, b.created_at, b.updated_at, 
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
@@ -347,7 +349,7 @@ func (r repo) FindBookingByUser(ctx context.Context, findReq api.FindListBooking
 	}
 	for rows.Next() {
 		var booking mapper.BookingMapper
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.PreviewId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err
@@ -361,7 +363,7 @@ func (r repo) FindBookingByUserAndBookedDate(ctx context.Context, findReq api.Fi
 	offset := (findReq.Page - 1) * findReq.PageSize
 	var listBooking []mapper.BookingMapper
 	rows, err := r.db.Query(`SELECT 
-			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.created_at, b.updated_at, 
+			b.id, b.customer_id, b.barber_id, b.result_id, b.status, b.price, b.slot_id, b.feedback_id, b.preview_id, b.created_at, b.updated_at, 
 			COALESCE(ARRAY_AGG(bd.service_id), '{}') AS list_services
 		FROM 
 			booking b
@@ -379,7 +381,7 @@ func (r repo) FindBookingByUserAndBookedDate(ctx context.Context, findReq api.Fi
 	}
 	for rows.Next() {
 		var booking mapper.BookingMapper
-		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
+		err = rows.Scan(&booking.ID, &booking.CustomerID, &booking.BarberId, &booking.ResultId, &booking.Status, &booking.Price, &booking.SlotId, &booking.FeedBackId, &booking.PreviewId, &booking.CreatedAt, &booking.UpdatedAt, pq.Array(&booking.ListServices))
 		if err != nil {
 			r.logger.Log("error while scanning")
 			return nil, err

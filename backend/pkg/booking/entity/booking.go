@@ -12,6 +12,7 @@ type Booking struct {
 	CreatedAt  int64   `json:"created_at"`
 	UpdatedAt  int64   `json:"updated_at"`
 	BookedDate string  `json:"booked_date"`
+	PreviewId  *int    `json:"preview_id,omitempty"`
 }
 
 type BookingDetail struct {

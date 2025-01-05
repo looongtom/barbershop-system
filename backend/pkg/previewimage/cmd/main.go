@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	kafkaBroker = "localhost:9092"
+	kafkaBroker = "0.tcp.ap.ngrok.io:16436"
 )
 
 func main() {
@@ -72,22 +72,29 @@ func main() {
 		svc = service.NewService(repo, logger, connGrpcAccount, kafkaBroker)
 	}
 
-	CreatePreviewImageHandler := httptransport.NewServer(
-		transport.MakeCreatePreviewImageEndpoints(svc),
-		transport.DecodeCreatePreviewImageRequest,
-		transport.EncodeResponse,
-	)
-
 	UploadImagesHandler := httptransport.NewServer(
 		transport.MakeUploadImagesEndpoints(svc),
 		transport.DecodeUploadImagesRequest,
 		transport.EncodeResponse,
 	)
 
+	GetListPreviewImageByUserHandler := httptransport.NewServer(
+		transport.MakeGetListPreviewImageByUserEndpoints(svc),
+		transport.DecodeGetListPreviewImageByUserRequest,
+		transport.EncodeResponse,
+	)
+
+	GetPreviewImageByIdHandler := httptransport.NewServer(
+		transport.MakeGetPreviewEndpoints(svc),
+		transport.DecodeGetPreviewRequest,
+		transport.EncodeResponse,
+	)
+
 	http.Handle("/", addCorsHeaders(r))
 
-	r.Handle("/previewimage/create", middleware.JWTMiddleware(CreatePreviewImageHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/previewimage/upload", middleware.JWTMiddleware(UploadImagesHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/previewimage/get-list", middleware.JWTMiddleware(GetListPreviewImageByUserHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/previewimage/get-by-id", middleware.JWTMiddleware(GetPreviewImageByIdHandler, connGrpcAccount)).Methods("GET")
 
 	logger.Log("msg", "HTTP", "addr", ":8005")
 	logger.Log("err", http.ListenAndServe(":8005", nil))

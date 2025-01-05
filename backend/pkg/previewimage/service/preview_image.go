@@ -42,6 +42,21 @@ func NewService(repo previewimage.PreviewImageRepository, logger log.Logger,
 	}
 }
 
+func (p PreviewImageService) SaveGeneratedImage(ctx context.Context, request api.SaveGenerateRequest) (interface{}, error) {
+	resp, err := p.repository.UploadImages(ctx, entity.PreviewImage{
+		GeneratedImg: request.GeneratedImg,
+		CreatedAt:    time.Now().Unix(),
+		AccountId:    request.AccountId,
+		SelfImg:      request.SelfImg,
+		ShapeImg:     request.ShapeImg,
+		ColorImg:     request.ColorImg,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (p PreviewImageService) UploadImages(ctx context.Context, request api.UpdateImageRequest) (interface{}, error) {
 	clientAccount := pb.NewUserServiceClient(p.connAccount)
 	checkBarber, err := clientAccount.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(request.AccountId)})
@@ -92,33 +107,33 @@ func (p PreviewImageService) UploadImages(ctx context.Context, request api.Updat
 		ColorImg: ColorImg,
 	}, nil
 }
-func (p PreviewImageService) CreatePreviewImage(ctx context.Context, request api.CreatePreviewImageRequest) (interface{}, error) {
-	// call grpc api
-	clientAccount := pb.NewUserServiceClient(p.connAccount)
-	checkBarber, err := clientAccount.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(request.AccountId)})
-	if err != nil {
-		fmt.Printf("error when checking account: %v", err)
-		return nil, err
-	}
-	if checkBarber == nil {
-		return nil, errors.New("account does not exist")
-	}
 
-	ts := time.Now()
-	urlImage, err := common.UploadImageToCloud(request.Url)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := p.repository.UploadImages(ctx, entity.PreviewImage{
-		Url:       urlImage,
-		CreatedAt: ts.Unix(),
-		AccountId: request.AccountId,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
+//func (p PreviewImageService) CreatePreviewImage(ctx context.Context, request api.CreatePreviewImageRequest) (interface{}, error) {
+//	// call grpc api
+//	clientAccount := pb.NewUserServiceClient(p.connAccount)
+//	checkBarber, err := clientAccount.CheckExistedBarber(ctx, &pb.CheckExistedBarberRequest{Id: int32(request.AccountId)})
+//	if err != nil {
+//		fmt.Printf("error when checking account: %v", err)
+//		return nil, err
+//	}
+//	if checkBarber == nil {
+//		return nil, errors.New("account does not exist")
+//	}
+//
+//	ts := time.Now()
+//	urlImage, err := common.UploadImageToCloud(request.Url)
+//	if err != nil {
+//		return nil, err
+//	}
+//	resp, err := p.repository.UploadImages(ctx, entity.PreviewImage{
+//		CreatedAt: ts.Unix(),
+//		AccountId: request.AccountId,
+//	})
+//	if err != nil {
+//		return nil, err
+//	}
+//	return resp, nil
+//}
 
 func (p PreviewImageService) GetPreviewImage(ctx context.Context, id int) (interface{}, error) {
 	resp, err := p.repository.GetPreviewImage(ctx, id)

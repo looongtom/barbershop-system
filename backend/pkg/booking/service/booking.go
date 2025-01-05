@@ -231,6 +231,7 @@ func (b BookingStruct) CreateBookingKafka(ctx context.Context, booking api.Booki
 		FeedBackId:    booking.FeedBackId,
 		ListServiceId: booking.ListServiceId,
 		BookedDate:    timeslotInfo.BookedDate,
+		PreviewId:     booking.PreviewId,
 	}
 	serializedBookingRequest, err := json.Marshal(kafkaBooking)
 	if err != nil {
@@ -378,6 +379,26 @@ func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, 
 		})
 	}
 
+	if resp.PreviewId == nil {
+		return api.BookingResponse{
+			ID:           resp.ID,
+			CustomerID:   resp.CustomerID,
+			CustomerName: customerInfo.Fullname,
+			BarberId:     resp.BarberId,
+			BarberName:   barberInfo.Fullname,
+			ResultId:     resp.ResultId,
+			Status:       resp.Status,
+			Price:        resp.Price,
+			SlotId:       resp.SlotId,
+			BookedDate:   timeslotInfo.BookedDate,
+			StartTime:    timeslotInfo.StartTime,
+			FeedBackId:   resp.FeedBackId,
+			CreatedAt:    resp.CreatedAt,
+			UpdatedAt:    resp.UpdatedAt,
+			ListServices: listServiceName,
+		}, nil
+	}
+
 	return api.BookingResponse{
 		ID:           resp.ID,
 		CustomerID:   resp.CustomerID,
@@ -394,6 +415,7 @@ func (b BookingStruct) GetBooking(ctx context.Context, id string) (interface{}, 
 		CreatedAt:    resp.CreatedAt,
 		UpdatedAt:    resp.UpdatedAt,
 		ListServices: listServiceName,
+		PreviewId:    *resp.PreviewId,
 	}, nil
 }
 
@@ -510,6 +532,30 @@ func (b BookingStruct) UpdateBookingTimeslot(ctx context.Context, updateBooking 
 		SlotId:     int(updatedTimeslot.Id),
 		FeedBackId: currentBooking.FeedBackId,
 	})
+	return nil
+}
+
+func (b BookingStruct) UpdateBookingStatus(ctx context.Context, updateBooking api.UpdateBookingStatusRequest) error {
+	respBooking, err := b.repository.GetBookingById(ctx, updateBooking.Id)
+	if err != nil {
+		fmt.Printf("updateBooking not found")
+		return err
+	}
+	_, err = b.repository.UpdateBooking(ctx, api.UpdateBookingRequest{
+		Id:         respBooking.ID,
+		CustomerID: respBooking.CustomerID,
+		BarberId:   respBooking.BarberId,
+		ResultId:   respBooking.ResultId,
+		Status:     updateBooking.Status,
+		Price:      respBooking.Price,
+		SlotId:     respBooking.SlotId,
+		FeedBackId: respBooking.FeedBackId,
+	})
+	if err != nil {
+		fmt.Printf("error when updating updateBooking: %v", err)
+		return err
+	}
+
 	return nil
 }
 

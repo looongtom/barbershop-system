@@ -22,7 +22,7 @@ import (
 var (
 	groupPreviewImageID     = "preview_img-group"
 	topicPreviewImage       = "preview_img"
-	kafkaBrokerPreviewImage = "localhost:9092"
+	kafkaBrokerPreviewImage = "0.tcp.ap.ngrok.io:16436"
 
 	hairfastTopic = "hairfast"
 )

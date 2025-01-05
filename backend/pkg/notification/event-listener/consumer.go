@@ -27,7 +27,7 @@ import (
 var (
 	groupID      = "booking-group"
 	topic        = "booking"
-	kafkaBroker  = "localhost:9092"
+	kafkaBroker  = "0.tcp.ap.ngrok.io:16436"
 	websocketURL = "ws://localhost:8080/trigger_booking"
 )
 
@@ -51,7 +51,7 @@ func saveNotificationToMongo(bookingResp api.BookingResponse) error {
 		fmt.Printf("Failed to encode booking: %s\n", err)
 		encodeBooking = nil
 	}
-
+	// send noti to customer
 	noti := entity.Notification{
 		UserId:    bookingResp.CustomerID,
 		Title:     titleNoti,
@@ -68,6 +68,7 @@ func saveNotificationToMongo(bookingResp api.BookingResponse) error {
 	}
 	fmt.Printf("Saved notification to MongoDB: %+v\n", noti)
 
+	// send noti to barber
 	noti2 := entity.Notification{
 		UserId:    bookingResp.BarberId,
 		Title:     titleNoti,
@@ -251,6 +252,7 @@ func main() {
 					SlotId:        int32(booking.SlotId),
 					ListServiceId: listServiceId32,
 					BookedDate:    booking.BookedDate,
+					PreviewId:     int32(booking.PreviewId),
 				})
 				if err != nil {
 					fmt.Printf("error while creating booking: %v\n", err)
@@ -268,6 +270,7 @@ func main() {
 					FeedBackId: int(resp.FeedbackId),
 					CreatedAt:  int64(resp.CreatedAt),
 					UpdatedAt:  int64(resp.UpdatedAt),
+					PreviewId:  int(resp.PreviewId),
 					// ListServices: convertInt32ToString(resp.ListServiceId),
 				}
 				sendToWebSocket(successBookingResp)
