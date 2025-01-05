@@ -13,6 +13,7 @@ type BookingRequest struct {
 	FeedBackId    int     `json:"feedback_id,omitempty"`
 	ListServiceId []int   `json:"list_service"`
 	BookedDate    string  `json:"booked_date"`
+	PreviewId     int     `json:"preview_id,omitempty"`
 }
 type KafkaBookingRequest struct {
 	UUID          string  `json:"uuid"`
@@ -45,6 +46,11 @@ type UpdateBookingRequest struct {
 type UpdateBookingServiceRequest struct {
 	Id            int   `json:"id"`
 	ListServiceId []int `json:"list_service"`
+}
+
+type UpdateBookingStatusRequest struct {
+	Id     int    `json:"id"`
+	Status string `json:"status"`
 }
 
 type UpdateBookingTimeslotRequest struct {

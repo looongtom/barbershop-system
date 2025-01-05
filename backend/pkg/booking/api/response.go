@@ -16,6 +16,7 @@ type BookingResponse struct {
 	CreatedAt    int64             `json:"created_at"`
 	UpdatedAt    int64             `json:"updated_at"`
 	ListServices []ServiceResponse `json:"list_services"`
+	PreviewId    int               `json:"preview_id,omitempty"`
 }
 type ServiceResponse struct {
 	ID          int    `json:"id"`

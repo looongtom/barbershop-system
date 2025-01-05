@@ -9,6 +9,10 @@ type CreatePreviewImageRequest struct {
 	AccountId int            `json:"account_id"`
 }
 
+type GetListPreviewImageRequest struct {
+	AccountId int `json:"account_id"`
+}
+
 type UpdateImageRequest struct {
 	SelfImg   multipart.File `json:"selfImg"`
 	ShapeImg  multipart.File `json:"shapeImg"`

@@ -16,7 +16,7 @@ import (
 const (
 	groupID     = "preview-img-group"
 	topic       = "preview-img"
-	kafkaBroker = "localhost:9092"
+	kafkaBroker = "0.tcp.ap.ngrok.io:16436"
 )
 
 func main() {

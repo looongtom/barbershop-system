@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	kafkaBrokerServer = "localhost:9092"
+	kafkaBrokerServer = "0.tcp.ap.ngrok.io:16436"
 )
 
 func main() {
@@ -131,6 +131,12 @@ func main() {
 		transport.EncodeResponse,
 	)
 
+	UpdateBookingStatusHandler := httptransport.NewServer(
+		transport.MakeUpdateBookingStatusEndpoints(svc),
+		transport.DecodeUpdateBookingStatusRequest,
+		transport.EncodeResponse,
+	)
+
 	http.Handle("/", addCorsHeaders(r))
 
 	r.Handle("/booking/create", middleware.JWTMiddleware(CreateBookingHandler, connGrpcAccount)).Methods("POST")
@@ -138,6 +144,7 @@ func main() {
 	r.Handle("/booking/update", middleware.JWTMiddlewareBarber(UpdateBookingHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/update-booking-service", middleware.JWTMiddlewareBarber(UpdateBookingServiceHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/update-booking-timeslot", middleware.JWTMiddlewareBarber(UpdateBookingTimeslotHandler, connGrpcAccount)).Methods("POST")
+	r.Handle("/booking/update-booking-status", middleware.JWTMiddlewareBarber(UpdateBookingStatusHandler, connGrpcAccount)).Methods("POST")
 	r.Handle("/booking/get-by-id", middleware.JWTMiddleware(GetBookingHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/booking/get-list", middleware.JWTMiddleware(GetListBookingHandler, connGrpcAccount)).Methods("GET")
 	r.Handle("/booking/find", middleware.JWTMiddlewareGetListBooking(FindBookingHandler, connGrpcAccount)).Methods("POST")

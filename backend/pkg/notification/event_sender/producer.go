@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	kafkaBroker = "localhost:9092"
+	kafkaBroker = "0.tcp.ap.ngrok.io:16436"
 	topic       = "booking"
 )
 

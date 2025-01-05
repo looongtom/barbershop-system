@@ -33,9 +33,9 @@ func (r repo) UploadImages(ctx context.Context, previewImage entity.PreviewImage
 }
 
 func (r repo) GetPreviewImage(ctx context.Context, id int) (*entity.PreviewImage, error) {
-	query := `SELECT id, account_id, self_img,shape_img,color_img, created_at FROM preview_image WHERE id=$1`
+	query := `SELECT id, account_id,generated_img, self_img,shape_img,color_img, created_at FROM preview_image WHERE id=$1`
 	var resp entity.PreviewImage
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&resp.ID, &resp.AccountId, &resp.CreatedAt)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&resp.ID, &resp.AccountId, &resp.GeneratedImg, &resp.SelfImg, &resp.ShapeImg, &resp.ColorImg, &resp.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (r repo) GetPreviewImage(ctx context.Context, id int) (*entity.PreviewImage
 }
 
 func (r repo) GetListPreviewImageByAccountId(ctx context.Context, accountId int) ([]entity.PreviewImage, error) {
-	query := `SELECT id, account_id,generated_img, self_img,shape_img,color_img, created_at FROM preview_image WHERE account_id=$1`
+	query := `SELECT id, account_id,generated_img, self_img,shape_img,color_img, created_at FROM preview_image WHERE account_id=$1 ORDER BY created_at DESC`
 	var list []entity.PreviewImage
 	rows, err := r.db.QueryContext(ctx, query, accountId)
 	if err != nil {

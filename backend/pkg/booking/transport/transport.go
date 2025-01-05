@@ -1,13 +1,14 @@
 package transport
 
 import (
-	"DoAn"
-	"DoAn/api"
-	"DoAn/common"
 	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+
+	booking "DoAn"
+	"DoAn/api"
+	"DoAn/common"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -129,12 +130,12 @@ func MakeCreateBookingKafkaEndpoints(svc booking.BookingService) endpoint.Endpoi
 				Data:    nil,
 			}, nil
 		}
-		//else if resp != nil && resp.(api.KafkaBookingResponse).ID == 0 {
+		// else if resp != nil && resp.(api.KafkaBookingResponse).ID == 0 {
 		//	return Response{
 		//		Message: "failed to create booking",
 		//		Data:    nil,
 		//	}, nil
-		//}
+		// }
 		return Response{
 			Message: "success",
 			Data:    resp,
@@ -173,6 +174,16 @@ func MakeUpdateBookingTimeslotEndpoints(svc booking.BookingService) endpoint.End
 	}
 }
 
+func MakeUpdateBookingStatusEndpoints(svc booking.BookingService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.UpdateBookingStatusRequest)
+		err := svc.UpdateBookingStatus(ctx, req)
+		return Response{
+			Message: "success",
+		}, err
+	}
+}
+
 func DecodeCreateBookingRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
 	var req api.BookingRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -191,7 +202,7 @@ func DecodeEmptyRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return nil, nil
 }
 func DecodeGetListBookingRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	//get page value from request param
+	// get page value from request param
 	page := r.URL.Query().Get("page")
 	pageValue, err := strconv.Atoi(page)
 	if err != nil {
@@ -238,6 +249,15 @@ func DecodeUpdateBookingServiceRequest(ctx context.Context, r *http.Request) (re
 
 func DecodeUpdateBookingTimeslotRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
 	var req api.UpdateBookingTimeslotRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func DecodeUpdateBookingStatusRequest(ctx context.Context, r *http.Request) (request interface{}, err error) {
+	var req api.UpdateBookingStatusRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err

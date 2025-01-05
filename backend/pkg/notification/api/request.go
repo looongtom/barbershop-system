@@ -33,6 +33,15 @@ type KafkaPreviewImageRequest struct {
 }
 
 type HairFastResult struct {
+	AccountId         int    `json:"account_id"`
+	SelfImgCloud      string `json:"self_img_cloud"`
+	ShapeImgCloud     string `json:"shape_img_cloud"`
+	ColorImgCloud     string `json:"color_img_cloud"`
+	GeneratedImgCloud string `json:"generated_img_cloud"`
+}
+
+type HairFastResultFromColab struct {
+	AccountId         string `json:"account_id"`
 	SelfImgCloud      string `json:"self_img_cloud"`
 	ShapeImgCloud     string `json:"shape_img_cloud"`
 	ColorImgCloud     string `json:"color_img_cloud"`
@@ -50,6 +59,7 @@ type KafkaBookingRequest struct {
 	FeedBackId    int     `json:"feedback_id,omitempty"`
 	ListServiceId []int   `json:"list_service"`
 	BookedDate    string  `json:"booked_date"`
+	PreviewId     int     `json:"preview_id,omitempty"`
 }
 
 type BookingRequest struct {

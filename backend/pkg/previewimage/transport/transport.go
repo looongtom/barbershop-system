@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"DoAn"
+	previewimage "DoAn"
 	"DoAn/api"
 	"DoAn/middleware"
 	"DoAn/service"
@@ -26,7 +26,7 @@ type (
 	}
 )
 
-//func MakeCreatePreviewImageEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
+// func MakeCreatePreviewImageEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
 //	return func(ctx context.Context, request interface{}) (interface{}, error) {
 //		req := request.(api.CreatePreviewImageRequest)
 //		resp, err := svc.CreatePreviewImage(ctx, req)
@@ -35,12 +35,39 @@ type (
 //			Data:    resp,
 //		}, err
 //	}
-//}
+// }
+
+func MakeGetListPreviewImageByUserEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(api.GetListPreviewImageRequest)
+		resp, err := svc.GetListPreviewImageByAccountId(ctx, req.AccountId)
+		return Response{
+			Message: "success",
+			Data:    resp,
+		}, err
+	}
+}
+
+func MakeGetPreviewEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(string)
+		idValue, ok := strconv.Atoi(req)
+		if ok != nil {
+			fmt.Println("Error Retrieving id")
+			return nil, ok
+		}
+		resp, err := svc.GetPreviewImage(ctx, idValue)
+		return Response{
+			Message: "success",
+			Data:    resp,
+		}, err
+	}
+}
 
 func MakeUploadImagesEndpoints(svc previewimage.PreviewImageService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.UpdateImageRequest)
-		//print request file name
+		// print request file name
 		resp, err := svc.UploadImages(ctx, req)
 		return Response{
 			Message: "success",
@@ -69,6 +96,20 @@ func MakeGetListPreviewImageByAccountIdEndpoints(svc service.PreviewImageService
 			Data:    resp,
 		}, err
 	}
+}
+
+func DecodeGetListPreviewImageByUserRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req api.GetListPreviewImageRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, err
+}
+
+func DecodeGetPreviewRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := r.URL.Query().Get("id")
+	return id, nil
 }
 
 func DecodeUploadImagesRequest(_ context.Context, r *http.Request) (interface{}, error) {

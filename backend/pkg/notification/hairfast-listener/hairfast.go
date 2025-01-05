@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,15 +9,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"DoAn/api"
 	"DoAn/database"
 	"DoAn/entity"
+	"DoAn/pb"
 )
 
 const websocketURL = "ws://localhost:8080/trigger_hairfast" // Assuming WebSocket server is on the same machine
@@ -24,7 +29,7 @@ const websocketURL = "ws://localhost:8080/trigger_hairfast" // Assuming WebSocke
 var (
 	groupPreviewImageID     = "my_consumer_group"
 	topicPreviewImage       = "preview_img"
-	kafkaBrokerPreviewImage = "localhost:9092"
+	kafkaBrokerPreviewImage = "0.tcp.ap.ngrok.io:16436"
 
 	hairfastResultTopic = "result_hairfast"
 )
@@ -47,7 +52,7 @@ func saveNotificationToMongo(result api.HairFastResult) error {
 		encodeResult = nil
 	}
 	noti := entity.Notification{
-		UserId:    1, // TODO: Hardcoded for now
+		UserId:    result.AccountId,
 		Title:     titleNoti,
 		Message:   title,
 		Type:      typeNoti,
@@ -87,7 +92,6 @@ func sendToWebSocket(result api.HairFastResult) {
 }
 
 func main() {
-
 	err := godotenv.Load("notification.env")
 	if err != nil {
 		logV.Fatalln("Error getting env, %v", err)
@@ -102,6 +106,14 @@ func main() {
 		return
 	}
 	defer kafkaBrokerServer.Close()
+
+	connGrpcPreviewImage, err := grpc.NewClient(os.Getenv("GRPC_PREVIEW_IMAGE_SERVER"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		fmt.Printf("did not connect: %v", err)
+		logV.Fatalf("Error getting env, %v", err)
+	}
+	defer connGrpcPreviewImage.Close()
+	clientPreviewImage := pb.NewPreviewImageServiceClient(connGrpcPreviewImage)
 
 	// connGrpcBooking, err := grpc.Dial(os.Getenv("GRPC_BOOKING_SERVER"), grpc.WithInsecure(), grpc.WithBlock())
 	// if err != nil {
@@ -149,19 +161,42 @@ func main() {
 			switch e := ev.(type) {
 			case *kafka.Message:
 				// Process the consumed message
-				var hairfastResult api.HairFastResult
-				err := json.Unmarshal(e.Value, &hairfastResult)
+				var hairfastResultColab api.HairFastResultFromColab
+				err := json.Unmarshal(e.Value, &hairfastResultColab)
 				if err != nil {
 					fmt.Printf("Failed to deserialize message: %s\n", err)
 					continue
 				}
-				fmt.Printf("Received booking: %+v\n", hairfastResult)
+				fmt.Printf("Received booking: %+v\n", hairfastResultColab)
+
+				accountId, ok := strconv.Atoi(hairfastResultColab.AccountId)
+				if ok != nil {
+					fmt.Printf("Failed to convert account id: %s\n", err)
+					continue
+				}
+				hairfastResult := api.HairFastResult{
+					AccountId:         accountId,
+					SelfImgCloud:      hairfastResultColab.SelfImgCloud,
+					ShapeImgCloud:     hairfastResultColab.ShapeImgCloud,
+					ColorImgCloud:     hairfastResultColab.ColorImgCloud,
+					GeneratedImgCloud: hairfastResultColab.GeneratedImgCloud,
+				}
 				// call another api
 				// CallAnotherAPI(previewImg)
 				sendToWebSocket(hairfastResult)
 				err = saveNotificationToMongo(hairfastResult)
 				if err != nil {
 					fmt.Printf("Failed to save notification to MongoDB: %s\n", err)
+				}
+				_, err = clientPreviewImage.SavePreviewImage(context.Background(), &pb.SavePreviewImageRequest{
+					AccountId:    int32(hairfastResult.AccountId),
+					GeneratedImg: hairfastResult.GeneratedImgCloud,
+					SelfImg:      hairfastResult.SelfImgCloud,
+					ShapeImg:     hairfastResult.ShapeImgCloud,
+					ColorImg:     hairfastResult.ColorImgCloud,
+				})
+				if err != nil {
+					fmt.Printf("Failed to save preview image: %s\n", err)
 				}
 
 			case kafka.Error:

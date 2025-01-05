@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+message PreviewImage {
+    int32 id = 1;
+    string generated_img = 2;
+    int64 created_at = 3;
+    int32 account_id = 4;
+    string self_img = 5;
+    string shape_img = 6;
+    string color_img = 7;
+}
+
+message GetPreviewImageRequest {
+    int32 account_id = 1;
+}
+
+message PreviewImageList {
+    repeated PreviewImage preview_images = 1;
+}
+
+message SavePreviewImageRequest {
+    int32 account_id = 1;
+    string generated_img = 2;
+    string self_img = 3;
+    string shape_img = 4;
+    string color_img = 5;
+}
+
+service PreviewImageService {
+    rpc GetPreviewImageByUser(GetPreviewImageRequest) returns (PreviewImageList) {};
+    rpc SavePreviewImage(SavePreviewImageRequest) returns (PreviewImage) {};
+}

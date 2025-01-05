@@ -17,6 +17,7 @@ func CreateTable(db sql.DB) (err error) {
     		price float NOT NULL,
     		slot_id int NOT NULL,
     		feedback_id int ,
+    		preview_id int,
     		created_at BIGINT NOT NULL,
     		updated_at BIGINT NOT NULL);
 `,
